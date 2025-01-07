@@ -22,7 +22,7 @@ func main() {
 	appManager := NewAppManager()
 	// Create application with options
 	err := wails.Run(&options.App{
-		Title:            "Acrylic",
+		Title:            "HEU-Wisedu",
 		Width:            1024,
 		Height:           768,
 		Assets:           assets,
@@ -39,7 +39,7 @@ func main() {
 		Linux: &linux.Options{
 			WindowIsTranslucent: true,
 			WebviewGpuPolicy:    linux.WebviewGpuPolicyAlways,
-			ProgramName:         "Acrylic",
+			ProgramName:         "HEU-Wisedu",
 			Icon:                appIcon,
 		},
 		Mac: &mac.Options{

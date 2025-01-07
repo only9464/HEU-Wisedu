@@ -1,4 +1,4 @@
-module Acrylic
+module HEU-Wisedu
 
 go 1.21
 

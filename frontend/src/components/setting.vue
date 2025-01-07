@@ -25,33 +25,6 @@
         </div>
       </div>
 
-      <!-- 选项0 - 更新源下拉选择及完整下载链接显示 -->
-      <div class="setting-option">
-        <span class="option-label">更新源：</span>
-        <div class="option-control">
-          <span
-            class="download-link"
-            @click="openUrlLink(currentDownloadLink)"
-            v-if="currentDownloadLink"
-          >
-            {{ currentDownloadLink }}
-          </span>
-          <el-select
-            v-model="selectedSource"
-            @change="updateDownloadLink"
-            placeholder="请选择更新源"
-            class="adaptive-select"
-          >
-            <el-option
-              v-for="source in sources"
-              :key="source.value"
-              :label="source.label"
-              :value="source.value"
-            ></el-option>
-          </el-select>
-        </div>
-      </div>
-
       <!-- 选项1 - 切换深浅模式 -->
       <div class="setting-option">
         <span class="option-label">切换深浅模式</span>
@@ -83,6 +56,8 @@
 
 <script setup>
 import { ref, onMounted, watch } from 'vue'
+import { useGlobalStore } from '../stores/globalStore'
+import { storeToRefs } from 'pinia'
 // 如果需要按需引入 Element Plus 组件，请取消注释以下行
 // import { ElSelect, ElOption } from 'element-plus'
 
@@ -110,8 +85,17 @@ const currentDownloadLink = ref('')
 // 定义配置文件路径
 const configFilePath = ref('')
 
-// 定义深色模式状态
-const isDarkMode = ref(false)
+// 获取store实例
+const globalStore = useGlobalStore()
+
+// 使用storeToRefs保持响应性
+const { isDarkMode } = storeToRefs(globalStore)
+
+// 修改全局变量
+const updateSettings = () => {
+  globalStore.setUserName('新用户名')
+  globalStore.setDarkMode(true)
+}
 
 // 更新下载链接的方法
 const updateDownloadLink = () => {
@@ -146,9 +130,6 @@ const executeOnLoad = async () => {
     const now_is_latest_version = await window.go.Settings.App.Check_now_is_latest(current_version_code, latest_version_code)
     is_latest_version.value = now_is_latest_version  // 正确: 使用 .value 更新
 
-    // 设置初始主题模式
-    setInitialTheme()
-    
     // 其他初始化逻辑
   } catch (error) {
     console.error('执行初始化函数时出错:', error)
@@ -158,12 +139,18 @@ const executeOnLoad = async () => {
 // 设置初始主题模式
 const setInitialTheme = () => {
   // 根据系统或其他逻辑设置初始主题
-  // 这里假设默认是浅色模式
-  isDarkMode.value = false
+  // 只在应用首次加载时设置默认值
+  if (globalStore.isDarkMode === undefined) {
+    globalStore.setDarkMode(false)
+  }
 }
 
 // 监视 isDarkMode 的变化，切换主题
 const toggleTheme = (value) => {
+  // 更新全局状态
+  globalStore.setDarkMode(value)
+  
+  // 调用系统主题切换
   if (value) {
     window.runtime.WindowSetDarkTheme()
   } else {
@@ -172,6 +159,8 @@ const toggleTheme = (value) => {
 }
 
 onMounted(() => {
+  // 只在应用首次加载时设置初始主题
+  setInitialTheme()
   executeOnLoad()
   updateDownloadLink()
 })

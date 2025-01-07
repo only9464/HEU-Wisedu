@@ -6,10 +6,10 @@ import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 import './style.css'
 
+const app = createApp(App)
 const pinia = createPinia()
 
-createApp(App)
-  .use(router)
-  .use(pinia)
-  .use(ElementPlus)
-  .mount('#app')
+app.use(pinia)
+   .use(router)
+   .use(ElementPlus)
+   .mount('#app')

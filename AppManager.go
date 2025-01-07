@@ -1,9 +1,12 @@
 package main
 
 import (
-	"Acrylic/apps/First"
-	"Acrylic/apps/Second"
-	"Acrylic/apps/Settings"
+	"HEU-Wisedu/apps/FAWKC"
+	"HEU-Wisedu/apps/Settings"
+	"HEU-Wisedu/apps/TJKC"
+	"HEU-Wisedu/apps/XGKC"
+	"HEU-Wisedu/apps/YXKCYX"
+	"HEU-Wisedu/apps/only9464"
 	"context"
 )
 
@@ -12,8 +15,11 @@ func NewAppManager() *AppManager {
 	return &AppManager{
 		apps: []AppInterface{
 			NewApp(),
-			First.NewApp(),
-			Second.NewApp(),
+			TJKC.NewApp(),
+			FAWKC.NewApp(),
+			XGKC.NewApp(),
+			YXKCYX.NewApp(),
+			only9464.NewApp(),
 			Settings.NewApp(),
 			// 在这里添加新的app即可(嘻嘻)*****
 		},

@@ -1,11 +1,11 @@
 <template>
   <div>
-    <First />
+    <XGKC />
   </div>
 </template>
 
 <script setup>
-import First from '../components/First/First.vue'; // 导入 First 组件
+import XGKC from '../components/XGKC/XGKC.vue'; // 导入 XGKC 组件
 </script>
 
 <style scoped>

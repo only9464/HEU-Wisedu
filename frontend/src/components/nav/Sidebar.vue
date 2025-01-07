@@ -6,18 +6,33 @@
 
           <li>
             <router-link to="/" class="nav-link">
-              <span>首页</span>
+              <span>首页-登录</span>
             </router-link>
           </li>
 
           <li>
-            <router-link to="/First" class="nav-link">
-              <span>第一个界面</span>
+            <router-link to="/TJKC" class="nav-link">
+              <span>培养方案内课程</span>
             </router-link>
           </li>
           <li>
-            <router-link to="/second" class="nav-link">
-              <span>第二个界面</span>
+            <router-link to="/FAWKC" class="nav-link">
+              <span>跨专业选修课</span>
+            </router-link>
+          </li>
+          <li>
+            <router-link to="/XGKC" class="nav-link">
+              <span>公选课</span>
+            </router-link>
+          </li>
+          <li>
+            <router-link to="/YXKCYX" class="nav-link">
+              <span>已选课程</span>
+            </router-link>
+          </li>
+          <li>
+            <router-link to="/only9464" class="nav-link">
+              <span>选(qiang)课助手</span>
             </router-link>
           </li>
           <!-- <li>
@@ -43,6 +58,17 @@
 </template>
 
 <script setup>
+import { useGlobalStore } from '../../stores/globalStore'
+
+// 获取store实例
+const globalStore = useGlobalStore()
+
+// 使用全局变量
+const toggleTheme = () => {
+  globalStore.setDarkMode(!globalStore.isDarkMode)
+  // 使用计算属性
+  console.log(globalStore.currentTheme)
+}
 </script>
 <style scoped>
 .sidebar-container {
