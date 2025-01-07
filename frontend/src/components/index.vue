@@ -129,6 +129,13 @@
               <el-tag :type="batch.canSelect === '1' ? 'success' : 'warning'" size="small">
                 {{ batch.canSelect === '1' ? '可选' : '不可选' }}
               </el-tag>
+              <el-tag 
+                v-if="batch.code === globalStore.batchId" 
+                type="danger" 
+                size="small"
+              >
+                已选中该批次
+              </el-tag>
             </div>
           </div>
           <div class="batch-time">
@@ -216,9 +223,7 @@ const sendLoginRequest = async (loginData) => {
   const response = await fetch('https://jwxk.hrbeu.edu.cn/xsxk/auth/hrbeu/login', {
     method: 'POST',
     body: formData,
-    // 添加必要的请求头
     headers: {
-      // 不需要设置 Content-Type，因为使用 FormData 会自动设置
       'Accept': 'application/json'
     }
   })
@@ -228,8 +233,8 @@ const sendLoginRequest = async (loginData) => {
   }
 
   const data = await response.json()
-  if (data.code !== 200) { // 假设200是成功状态码
-    throw new Error(data.message || '登录失败')
+  if (data.code !== 200) {
+    throw new Error(`登录失败 [${data.code}]: ${data.msg || '未知错误'}`)
   }
 
   return data
@@ -267,10 +272,10 @@ const handleLogin = async () => {
       
       ElMessage.success(`欢迎回来，${loginResult.data.student.XM}`)
     } else {
-      throw new Error(loginResult.msg || '登录失败')
+      throw new Error(`登录失败 [${loginResult.code}]: ${loginResult.msg || '未知错误'}`)
     }
   } catch (error) {
-    ElMessage.error(error.message || '登录失败，请重试')
+    ElMessage.error(error.message)
     refreshCaptcha()
   } finally {
     loading.value = false

@@ -97,9 +97,29 @@ const loading = ref(false)
 const error = ref(null)
 
 // 选课处理函数
-const handleSelect = (course) => {
-  console.log('选择课程:', course)
-  ElMessage.info('选课功能开发中...')
+const handleSelect = async (course) => {
+  try {
+    if (!globalStore.Authorization || !globalStore.batchId) {
+      throw new Error('缺少必要的认证信息')
+    }
+
+    const result = await window.go.only9464.App.AddClazz(
+      globalStore.Authorization,
+      globalStore.batchId,
+      'TJKC',
+      course.JXBID,
+      course.secretVal,
+      '1'
+    )
+
+    if (result.code === 200) {
+      ElMessage.success(result.msg || '选课成功')
+    } else {
+      throw new Error(result.msg || '选课失败')
+    }
+  } catch (err) {
+    ElMessage.error(err.message)
+  }
 }
 
 // 处理数据的计算属性
