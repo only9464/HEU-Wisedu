@@ -1,0 +1,6 @@
+{
+    "workbench.editorAssociations": {
+        "*.md": "default",
+        "*.markdown": "default"
+    }
+}
