@@ -1,58 +1,231 @@
 <template>
-  <div class="First-container">
+  <div class="xgkc-container">
     <h1>公选课</h1>
-    <!-- 输入框，用于接受用户输入的两个整数 -->
-    <div>
-      <input type="number" v-model.number="numberA" placeholder="Enter number A" />
-      <input type="number" v-model.number="numberB" placeholder="Enter number B" />
+    <div v-if="error" class="error">
+      {{ error }}
     </div>
-    <!-- 按钮，点击后执行计算 -->
-    <button @click="calculateSum">计算结果 乘法</button>
-    <!-- 展示计算结果 -->
-    <div v-if="result !== null">
-      <p>Result: {{ result }}</p>
+    <div class="table-container">
+      <el-table 
+        v-loading="loading"
+        :data="processedData" 
+        style="width: 100%"
+        :stripe="true"
+        class="acrylic-effect"
+      >
+        <el-table-column 
+          type="index" 
+          label="序号" 
+          width="60" 
+          align="center"
+          header-align="center"
+        />
+        <el-table-column 
+          prop="JXBID" 
+          label="教学班ID" 
+          min-width="180" 
+          align="center"
+          header-align="center"
+        />
+        <el-table-column 
+          prop="KCM" 
+          label="课程名称" 
+          min-width="200" 
+          align="center"
+          header-align="center"
+        />
+        <el-table-column 
+          prop="SKJS" 
+          label="授课教师" 
+          min-width="120" 
+          align="center"
+          header-align="center"
+        />
+        <el-table-column 
+          prop="XF" 
+          label="学分" 
+          width="80" 
+          align="center"
+          header-align="center"
+        />
+        <el-table-column 
+          prop="secretVal" 
+          label="密钥" 
+          min-width="150" 
+          align="left"
+          header-align="center"
+          show-overflow-tooltip
+        >
+          <template #default="scope">
+            <el-tooltip 
+              :content="scope.row.secretVal" 
+              placement="top" 
+              :show-after="500"
+            >
+              <span class="secret-text">{{ scope.row.secretVal.slice(0, 20) }}...</span>
+            </el-tooltip>
+          </template>
+        </el-table-column>
+        <el-table-column 
+          label="操作" 
+          width="120" 
+          align="center"
+          header-align="center"
+        >
+          <template #default="scope">
+            <el-button 
+              type="primary" 
+              size="small"
+              @click="handleSelect(scope.row)"
+            >
+              选课
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, computed } from 'vue'
+import { useGlobalStore } from '../../stores/globalStore'
+import { ElMessage } from 'element-plus'
 
-// 使用 ref 创建响应式变量，用于存储输入数据和计算结果
-const numberA = ref(0)
-const numberB = ref(0)
-const result = ref(null)
+const globalStore = useGlobalStore()
+const responseData = ref(null)
+const loading = ref(false)
+const error = ref(null)
 
-// 定义方法，调用 Go 后端的 First 方法并保存结果
-async function calculateSum() {
+// 选课处理函数
+const handleSelect = (course) => {
+  console.log('选择课程:', course)
+  ElMessage.info('选课功能开发中...')
+}
+
+// 处理数据的计算属性
+const processedData = computed(() => {
+  if (!responseData.value || !responseData.value.data || !responseData.value.data.rows) {
+    return []
+  }
+
+  const result = []
+  // 遍历rows中的每个课程
+  for (const course of responseData.value.data.rows) {
+    // 提取所需信息
+    const courseInfo = {
+      JXBID: course.JXBID,
+      KCM: course.KCM,
+      SKJS: course.SKJS,
+      secretVal: course.secretVal,
+      XF: course.XF
+    }
+    // 将信息添加到结果列表中
+    result.push(courseInfo)
+  }
+  return result
+})
+
+// 获取公选课
+const getXGKC = async () => {
+  loading.value = true
+  error.value = null
+  
   try {
-    result.value = await window.go.First.App.First(numberA.value, numberB.value)
-    console.log("Result from First:", result.value)
-  } catch (error) {
-    console.error("Failed to call First:", error)
+    if (!globalStore.Authorization || !globalStore.batchId) {
+      throw new Error('缺少必要的认证信息')
+    }
+
+    const data = await window.go.XGKC.App.GetXGKC(globalStore.Authorization, globalStore.batchId)
+    if (data.code !== 200) {
+      throw new Error(data.msg || '获取课程列表失败')
+    }
+    responseData.value = data
+  } catch (err) {
+    error.value = err.message
+    ElMessage.error(err.message)
+  } finally {
+    loading.value = false
   }
 }
+
+onMounted(() => {
+  getXGKC()
+})
 </script>
 
 <style scoped>
-.First-container {
-  max-width: 400px;
-  margin: 0 auto;
+/* 样式部分与其他组件相同 */
+.xgkc-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 0 20px;
+  gap: 20px;
+  overflow: hidden;
+}
+
+.error {
+  color: #f56c6c;
   text-align: center;
+  padding: 20px;
+  margin-top: 20px;
+}
+
+h1 {
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.table-container {
   padding: 20px;
 }
 
-input {
-  width: 80px;
-  margin: 5px;
+.acrylic-effect {
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  transition: all 0.3s ease;
 }
 
-button {
-  margin-top: 10px;
+.secret-text {
+  font-family: monospace;
+  font-size: 12px;
+  color: #666;
+  cursor: pointer;
 }
 
-p {
-  margin-top: 10px;
-  font-size: 18px;
+/* 适配深色模式 */
+@media (prefers-color-scheme: dark) {
+  h1 {
+    color: #fff;
+  }
+
+  .acrylic-effect {
+    background: rgba(255, 255, 255, 0.15);
+  }
+
+  :deep(.el-table) {
+    background-color: transparent;
+    --el-table-border-color: rgba(255, 255, 255, 0.1);
+    --el-table-header-bg-color: rgba(255, 255, 255, 0.05);
+    --el-table-row-hover-bg-color: rgba(255, 255, 255, 0.08);
+    --el-table-text-color: #e6e6e6;
+    --el-table-header-text-color: #ffffff;
+  }
+
+  :deep(.el-table__empty-block) {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 8px;
+    margin: 8px;
+  }
+
+  :deep(.el-table__empty-text) {
+    color: #909399;
+  }
+
+  .secret-text {
+    color: #999;
+  }
 }
 </style>

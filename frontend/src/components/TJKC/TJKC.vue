@@ -1,14 +1,87 @@
 <template>
   <div class="tjkc-container">
     <h1>培养方案内课程</h1>
-    <div v-if="loading" class="loading">
-      <el-loading :active="loading" />
-    </div>
-    <div v-else-if="error" class="error">
+    <div v-if="error" class="error">
       {{ error }}
     </div>
-    <div v-else class="json-container">
-      <pre>{{ JSON.stringify(processedData, null, 2) }}</pre>
+    <div class="table-container">
+      <el-table 
+        v-loading="loading"
+        :data="processedData" 
+        style="width: 100%"
+        :stripe="true"
+        class="acrylic-effect"
+      >
+        <el-table-column 
+          type="index" 
+          label="序号" 
+          width="60" 
+          align="center"
+          header-align="center"
+        />
+        <el-table-column 
+          prop="JXBID" 
+          label="教学班ID" 
+          min-width="180" 
+          align="center"
+          header-align="center"
+        />
+        <el-table-column 
+          prop="KCM" 
+          label="课程名称" 
+          min-width="200" 
+          align="center"
+          header-align="center"
+        />
+        <el-table-column 
+          prop="SKJS" 
+          label="授课教师" 
+          min-width="120" 
+          align="center"
+          header-align="center"
+        />
+        <el-table-column 
+          prop="XF" 
+          label="学分" 
+          width="80" 
+          align="center"
+          header-align="center"
+        />
+        <el-table-column 
+          prop="secretVal" 
+          label="密钥" 
+          min-width="150" 
+          align="left"
+          header-align="center"
+          show-overflow-tooltip
+        >
+          <template #default="scope">
+            <el-tooltip 
+              :content="scope.row.secretVal" 
+              placement="top" 
+              :show-after="500"
+            >
+              <span class="secret-text">{{ scope.row.secretVal.slice(0, 20) }}...</span>
+            </el-tooltip>
+          </template>
+        </el-table-column>
+        <el-table-column 
+          label="操作" 
+          width="120" 
+          align="center"
+          header-align="center"
+        >
+          <template #default="scope">
+            <el-button 
+              type="primary" 
+              size="small"
+              @click="handleSelect(scope.row)"
+            >
+              选课
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
     </div>
   </div>
 </template>
@@ -22,6 +95,12 @@ const globalStore = useGlobalStore()
 const responseData = ref(null)
 const loading = ref(false)
 const error = ref(null)
+
+// 选课处理函数
+const handleSelect = (course) => {
+  console.log('选择课程:', course)
+  ElMessage.info('选课功能开发中...')
+}
 
 // 处理数据的计算属性
 const processedData = computed(() => {
@@ -79,50 +158,76 @@ onMounted(() => {
 
 <style scoped>
 .tjkc-container {
-  padding: 20px;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.loading {
-  text-align: center;
-  padding: 40px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 0 20px;
+  gap: 20px;
+  overflow: hidden;
 }
 
 .error {
   color: #f56c6c;
   text-align: center;
   padding: 20px;
+  margin-top: 20px;
 }
 
 h1 {
   margin-bottom: 20px;
+  color: #333;
 }
 
-.json-container {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border-radius: 8px;
+.table-container {
   padding: 20px;
-  overflow-x: auto;
 }
 
-pre {
-  margin: 0;
-  white-space: pre-wrap;
-  word-wrap: break-word;
+.acrylic-effect {
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.secret-text {
   font-family: monospace;
-  font-size: 14px;
+  font-size: 12px;
+  color: #666;
+  cursor: pointer;
 }
 
 /* 适配深色模式 */
 @media (prefers-color-scheme: dark) {
-  .json-container {
-    background: rgba(255, 255, 255, 0.05);
+  h1 {
+    color: #fff;
   }
-  
-  pre {
-    color: #ddd;
+
+  .acrylic-effect {
+    background: rgba(255, 255, 255, 0.15);
+  }
+
+  :deep(.el-table) {
+    background-color: transparent;
+    --el-table-border-color: rgba(255, 255, 255, 0.1);
+    --el-table-header-bg-color: rgba(255, 255, 255, 0.05);
+    --el-table-row-hover-bg-color: rgba(255, 255, 255, 0.08);
+    --el-table-text-color: #e6e6e6;
+    --el-table-header-text-color: #ffffff;
+  }
+
+  :deep(.el-table__empty-block) {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 8px;
+    margin: 8px;
+  }
+
+  :deep(.el-table__empty-text) {
+    color: #909399;
+  }
+
+  .secret-text {
+    color: #999;
   }
 }
 </style>

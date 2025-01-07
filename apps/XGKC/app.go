@@ -21,7 +21,3 @@ func (a *App) Startup(ctx context.Context) {
 }
 
 // 供前端直接调用的函数都写在这里
-
-func (s *App) Template(a, b int) int {
-	return Template(a, b)
-}
