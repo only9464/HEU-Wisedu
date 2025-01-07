@@ -1,58 +1,128 @@
 <template>
-  <div class="First-container">
+  <div class="tjkc-container">
     <h1>培养方案内课程</h1>
-    <!-- 输入框，用于接受用户输入的两个整数 -->
-    <div>
-      <input type="number" v-model.number="numberA" placeholder="Enter number A" />
-      <input type="number" v-model.number="numberB" placeholder="Enter number B" />
+    <div v-if="loading" class="loading">
+      <el-loading :active="loading" />
     </div>
-    <!-- 按钮，点击后执行计算 -->
-    <button @click="calculateSum">计算结果 乘法</button>
-    <!-- 展示计算结果 -->
-    <div v-if="result !== null">
-      <p>Result: {{ result }}</p>
+    <div v-else-if="error" class="error">
+      {{ error }}
+    </div>
+    <div v-else class="json-container">
+      <pre>{{ JSON.stringify(processedData, null, 2) }}</pre>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, computed } from 'vue'
+import { useGlobalStore } from '../../stores/globalStore'
+import { ElMessage } from 'element-plus'
 
-// 使用 ref 创建响应式变量，用于存储输入数据和计算结果
-const numberA = ref(0)
-const numberB = ref(0)
-const result = ref(null)
+const globalStore = useGlobalStore()
+const responseData = ref(null)
+const loading = ref(false)
+const error = ref(null)
 
-// 定义方法，调用 Go 后端的 First 方法并保存结果
-async function calculateSum() {
+// 处理数据的计算属性
+const processedData = computed(() => {
+  if (!responseData.value || !responseData.value.data || !responseData.value.data.rows) {
+    return []
+  }
+
+  const result = []
+  // 遍历rows中的每个课程
+  for (const course of responseData.value.data.rows) {
+    // 遍历每个课程的教学班列表
+    for (const tc of course.tcList) {
+      // 提取所需信息
+      const courseInfo = {
+        JXBID: tc.JXBID,
+        KCM: tc.KCM,
+        SKJS: tc.SKJS,
+        secretVal: tc.secretVal,
+        XF: tc.XF
+      }
+      // 将信息添加到结果列表中
+      result.push(courseInfo)
+    }
+  }
+  return result
+})
+
+// 获取培养方案内课程
+const getTJKC = async () => {
+  loading.value = true
+  error.value = null
+  
   try {
-    result.value = await window.go.First.App.First(numberA.value, numberB.value)
-    console.log("Result from First:", result.value)
-  } catch (error) {
-    console.error("Failed to call First:", error)
+    if (!globalStore.Authorization || !globalStore.batchId) {
+      throw new Error('缺少必要的认证信息')
+    }
+
+    const data = await window.go.TJKC.App.GetTJKC(globalStore.Authorization, globalStore.batchId)
+    if (data.code !== 200) {
+      throw new Error(data.msg || '获取课程列表失败')
+    }
+    responseData.value = data
+  } catch (err) {
+    error.value = err.message
+    ElMessage.error(err.message)
+  } finally {
+    loading.value = false
   }
 }
+
+onMounted(() => {
+  getTJKC()
+})
 </script>
 
 <style scoped>
-.First-container {
-  max-width: 400px;
+.tjkc-container {
+  padding: 20px;
+  max-width: 1200px;
   margin: 0 auto;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+}
+
+.error {
+  color: #f56c6c;
   text-align: center;
   padding: 20px;
 }
 
-input {
-  width: 80px;
-  margin: 5px;
+h1 {
+  margin-bottom: 20px;
 }
 
-button {
-  margin-top: 10px;
+.json-container {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 8px;
+  padding: 20px;
+  overflow-x: auto;
 }
 
-p {
-  margin-top: 10px;
-  font-size: 18px;
+pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-family: monospace;
+  font-size: 14px;
+}
+
+/* 适配深色模式 */
+@media (prefers-color-scheme: dark) {
+  .json-container {
+    background: rgba(255, 255, 255, 0.05);
+  }
+  
+  pre {
+    color: #ddd;
+  }
 }
 </style>
