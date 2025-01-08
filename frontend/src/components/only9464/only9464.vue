@@ -1,58 +1,276 @@
 <template>
-  <div class="First-container">
+  <div class="only9464-container">
     <h1>抢课助手</h1>
-    <!-- 输入框，用于接受用户输入的两个整数 -->
-    <div>
-      <input type="number" v-model.number="numberA" placeholder="Enter number A" />
-      <input type="number" v-model.number="numberB" placeholder="Enter number B" />
-    </div>
-    <!-- 按钮，点击后执行计算 -->
-    <button @click="calculateSum">计算结果 乘法</button>
-    <!-- 展示计算结果 -->
-    <div v-if="result !== null">
-      <p>Result: {{ result }}</p>
+    
+    <!-- 任务队列表格 -->
+    <div class="task-table-container">
+      <div class="table-header">
+        <h2>任务队列</h2>
+        <el-button 
+          type="primary" 
+          :icon="Refresh"
+          circle
+          @click="handleRefresh"
+          :loading="loading"
+        />
+      </div>
+      
+      <el-table 
+        v-loading="loading"
+        :data="taskList" 
+        style="width: 100%"
+        :stripe="true"
+        class="acrylic-effect"
+      >
+        <el-table-column 
+          type="index" 
+          label="序号" 
+          width="60" 
+          align="center"
+          header-align="center"
+        />
+        <el-table-column 
+          prop="JXBID" 
+          label="教学班ID" 
+          min-width="180" 
+          align="center"
+          header-align="center"
+          show-overflow-tooltip
+        />
+        <el-table-column 
+          prop="KCM" 
+          label="课程名称" 
+          min-width="200" 
+          align="center"
+          header-align="center"
+          show-overflow-tooltip
+        />
+        <el-table-column 
+          prop="SKJS" 
+          label="授课教师" 
+          min-width="120" 
+          align="center"
+          header-align="center"
+        >
+          <template #default="scope">
+            <div class="multi-line-cell">{{ scope.row.SKJS }}</div>
+          </template>
+        </el-table-column>
+        <el-table-column 
+          prop="XF" 
+          label="学分" 
+          width="80" 
+          align="center"
+          header-align="center"
+        />
+        <el-table-column 
+          prop="clazzType" 
+          label="课程类型" 
+          width="120" 
+          align="center"
+          header-align="center"
+        >
+          <template #default="scope">
+            <el-tag :type="getTagType(scope.row.clazzType)">
+              {{ getClazzTypeLabel(scope.row.clazzType) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column 
+          prop="secretVal" 
+          label="密钥值" 
+          min-width="180" 
+          align="center"
+          header-align="center"
+          show-overflow-tooltip
+        >
+          <template #default="scope">
+            <span class="secret-text">{{ scope.row.secretVal }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column 
+          label="操作" 
+          width="120"
+          align="center"
+          header-align="center"
+          fixed="right"
+        >
+          <template #default="scope">
+            <el-button 
+              type="danger"
+              size="small"
+              @click="handleRemoveTask(scope.row)"
+            >
+              移除
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
+import { Refresh } from '@element-plus/icons-vue'
+import { useCourseStore } from '../../stores/courseStore'
 
-// 使用 ref 创建响应式变量，用于存储输入数据和计算结果
-const numberA = ref(0)
-const numberB = ref(0)
-const result = ref(null)
+const loading = ref(false)
+const taskList = ref([])
+const courseStore = useCourseStore()
 
-// 定义方法，调用 Go 后端的 First 方法并保存结果
-async function calculateSum() {
+// 获取课程类型标签
+const getClazzTypeLabel = (type) => {
+  const labels = {
+    'XGKC': '公选课',
+    'TJKC': '培养方案内课程',
+    'FAWKC': '跨专业选修课'
+  }
+  return labels[type] || type
+}
+
+// 获取标签类型
+const getTagType = (type) => {
+  const types = {
+    'XGKC': 'success',
+    'TJKC': 'primary',
+    'FAWKC': 'warning'
+  }
+  return types[type] || 'info'
+}
+
+// 获取任务列表
+const getTaskList = () => {
+  loading.value = true
   try {
-    result.value = await window.go.First.App.First(numberA.value, numberB.value)
-    console.log("Result from First:", result.value)
+    taskList.value = courseStore.getTaskQueue()
   } catch (error) {
-    console.error("Failed to call First:", error)
+    ElMessage.error('获取任务列表失败：' + error.message)
+  } finally {
+    loading.value = false
   }
 }
+
+// 移除任务
+const handleRemoveTask = async (task) => {
+  try {
+    courseStore.removeFromTaskQueue(task.JXBID)
+    ElMessage.success('任务已移除')
+    getTaskList() // 刷新列表
+  } catch (error) {
+    ElMessage.error('移除任务失败：' + error.message)
+  }
+}
+
+// 刷新任务列表
+const handleRefresh = () => {
+  getTaskList()
+}
+
+// 组件加载时获取任务列表
+onMounted(() => {
+  getTaskList()
+})
 </script>
 
 <style scoped>
-.First-container {
-  max-width: 400px;
-  margin: 0 auto;
-  text-align: center;
+.only9464-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 0 20px;
+  gap: 20px;
+  overflow: hidden;
+}
+
+.task-table-container {
   padding: 20px;
 }
 
-input {
-  width: 80px;
-  margin: 5px;
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 0 8px;
 }
 
-button {
-  margin-top: 10px;
+.acrylic-effect {
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  transition: all 0.3s ease;
 }
 
-p {
-  margin-top: 10px;
-  font-size: 18px;
+/* 修改表格单元格样式，支持自动换行 */
+.multi-line-cell {
+  white-space: normal;
+  word-break: break-all;
+  line-height: 1.5;
+}
+
+/* 适配深色模式 */
+@media (prefers-color-scheme: dark) {
+  .acrylic-effect {
+    background: rgba(255, 255, 255, 0.15);
+  }
+
+  :deep(.el-table) {
+    background-color: transparent;
+    --el-table-border-color: rgba(255, 255, 255, 0.1);
+    --el-table-header-bg-color: rgba(255, 255, 255, 0.05);
+    --el-table-row-hover-bg-color: rgba(255, 255, 255, 0.08);
+    --el-table-text-color: #e6e6e6;
+    --el-table-header-text-color: #ffffff;
+  }
+
+  :deep(.el-table__empty-block) {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 8px;
+    margin: 8px;
+  }
+
+  :deep(.el-table__empty-text) {
+    color: #909399;
+  }
+}
+
+/* 单元格内容单行显示并居中 */
+:deep(.el-table .cell) {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+}
+
+/* 鼠标悬停时显示完整内容 */
+:deep(.el-table .el-tooltip__trigger) {
+  display: inline-block;
+  width: 100%;
+}
+
+/* 调整表格行高 */
+:deep(.el-table__row) {
+  height: auto;
+}
+
+:deep(.el-table__cell) {
+  padding: 8px 0;
+}
+
+.secret-text {
+  font-family: monospace;
+  font-size: 0.9em;
+  color: #666;
+}
+
+/* 适配深色模式 */
+@media (prefers-color-scheme: dark) {
+  .secret-text {
+    color: #999;
+  }
 }
 </style>
+

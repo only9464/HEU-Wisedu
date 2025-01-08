@@ -31,14 +31,14 @@ HEU-Wisedu是一款基于[哈尔滨工程大学教务选课系统](https://jwxk.
 
 相关功能截图： (先欠着)
 
-# 三、支持平台
+# 三、下载
 
 - [X] `Windows` [下载](https://ghproxy.mioe.me/https://raw.githubusercontent.com/only9464/HEU-Wisedu/master/build/bin/HEU-Wisedu.exe)
-- [X] `MacOS`   [下载](#五-二次开发-3打包)
-- [X] `Linux`   [下载](#五-二次开发-3打包)
+- [X] `MacOS`   [下载](#3打包)
+- [X] `Linux`   [下载](#3打包)
 
 
-MacOS、Linux 懒得编译了，有需要的可以自己下载源码编译，可以参考 下面的 二次开发 部分
+MacOS、Linux 懒得编译了，有需要的可以自己下载源码编译，可以参考 下面的 二次开发[打包](#3打包) 部分
 
 # 四、支持作者
 

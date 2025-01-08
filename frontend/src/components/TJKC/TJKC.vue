@@ -21,6 +21,8 @@
         style="width: 100%"
         :stripe="true"
         class="acrylic-effect"
+        @sort-change="handleSortChange"
+        :default-sort="{ prop: 'SFYX', order: 'descending' }"
       >
         <el-table-column 
           type="index" 
@@ -42,6 +44,7 @@
           min-width="200" 
           align="center"
           header-align="center"
+          sortable="custom"
         />
         <el-table-column 
           prop="SKJS" 
@@ -49,6 +52,7 @@
           min-width="120" 
           align="center"
           header-align="center"
+          sortable="custom"
         />
         <el-table-column 
           prop="XF" 
@@ -56,21 +60,37 @@
           width="80" 
           align="center"
           header-align="center"
+          sortable="custom"
         />
         <el-table-column 
+          prop="SFYX"
           label="操作" 
-          width="120" 
+          width="200"
           align="center"
           header-align="center"
+          sortable="custom"
         >
           <template #default="scope">
-            <el-button 
-              :type="scope.row.SFYX === '1' ? 'danger' : 'primary'" 
-              size="small"
-              @click="scope.row.SFYX === '1' ? handleUnselect(scope.row) : handleSelect(scope.row)"
-            >
-              {{ scope.row.SFYX === '1' ? '退选' : '选课' }}
-            </el-button>
+            <div class="operation-buttons">
+              <el-button 
+                :type="scope.row.SFYX === '1' ? 'danger' : 'primary'"
+                size="small"
+                @click="scope.row.SFYX === '1' ? handleUnselect(scope.row) : handleSelect(scope.row)"
+              >
+                {{ scope.row.SFYX === '1' ? '退选' : '选课' }}
+              </el-button>
+              
+              <el-button
+                v-if="scope.row.SFYX !== '1'"
+                type="success"
+                size="small"
+                @click="handleAddToQueue(scope.row)"
+                :disabled="isInQueue(scope.row.JXBID)"
+                :class="{ 'is-in-queue': isInQueue(scope.row.JXBID) }"
+              >
+                {{ isInQueue(scope.row.JXBID) ? '已在队列' : '加入队列' }}
+              </el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -89,6 +109,12 @@ const globalStore = useGlobalStore()
 const courseStore = useCourseStore()
 const loading = ref(false)
 const error = ref(null)
+
+// 添加排序相关的变量和方法
+const sortOrder = ref({
+  prop: 'SFYX',  // 默认按选课状态排序
+  order: 'descending'  // 默认降序，使已选课程在上面
+})
 
 // 选课处理函数
 const handleSelect = async (course) => {
@@ -163,18 +189,29 @@ const handleUnselect = async (course) => {
   }
 }
 
+// 添加到任务队列
+const handleAddToQueue = (course) => {
+  const task = {
+    JXBID: course.JXBID,
+    KCM: course.KCM,
+    SKJS: course.SKJS,
+    XF: course.XF,
+    clazzType: 'TJKC',
+    secretVal: course.secretVal
+  }
+  courseStore.addToTaskQueue(task)
+  ElMessage.success('已添加到任务队列')
+}
+
 // 处理数据的计算属性
 const processedData = computed(() => {
   if (!courseStore.tjkcData || !courseStore.tjkcData.data || !courseStore.tjkcData.data.rows) {
     return []
   }
 
-  const result = []
-  // 遍历rows中的每个课程
+  let result = []
   for (const course of courseStore.tjkcData.data.rows) {
-    // 遍历每个课程的教学班列表
     for (const tc of course.tcList) {
-      // 提取所需信息
       const courseInfo = {
         JXBID: tc.JXBID,
         KCM: tc.KCM,
@@ -183,12 +220,38 @@ const processedData = computed(() => {
         XF: tc.XF,
         SFYX: tc.SFYX
       }
-      // 将信息添加到结果列表中
       result.push(courseInfo)
     }
   }
+
+  // 添加排序逻辑
+  if (sortOrder.value.prop) {
+    const { prop, order } = sortOrder.value
+    result.sort((a, b) => {
+      let compareResult = 0
+      // 处理不同类型的排序
+      switch (prop) {
+        case 'XF':  // 学分按数字排序
+          compareResult = parseFloat(a[prop]) - parseFloat(b[prop])
+          break
+        case 'SFYX':  // 选课状态按数字排序
+          compareResult = parseInt(a[prop]) - parseInt(b[prop])
+          break
+        default:  // 其他字段按字符串排序
+          compareResult = String(a[prop]).localeCompare(String(b[prop]), 'zh-CN')
+      }
+      // 根据排序方向调整结果
+      return order === 'ascending' ? compareResult : -compareResult
+    })
+  }
+
   return result
 })
+
+// 添加排序处理函数
+const handleSortChange = ({ prop, order }) => {
+  sortOrder.value = { prop, order }
+}
 
 // 获取培养方案内课程
 const getTJKC = async () => {
@@ -224,6 +287,11 @@ const handleRefresh = async () => {
   courseStore.tjkcLoaded = false
   // 重新获取数据
   await getTJKC()
+}
+
+// 添加判断课程是否在队列中的方法
+const isInQueue = (jxbid) => {
+  return courseStore.taskQueue.some(task => task.JXBID === jxbid)
 }
 
 onMounted(() => {
@@ -312,5 +380,24 @@ h1 {
   align-items: center;
   margin-bottom: 16px;
   padding: 0 8px;
+}
+
+.operation-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+/* 添加已在队列中按钮的样式 */
+.is-in-queue {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* 适配深色模式 */
+@media (prefers-color-scheme: dark) {
+  .is-in-queue {
+    opacity: 0.5;
+  }
 }
 </style>

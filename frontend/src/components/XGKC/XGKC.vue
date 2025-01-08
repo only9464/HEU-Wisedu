@@ -110,19 +110,32 @@
         <el-table-column 
           prop="SFYX"
           label="操作" 
-          width="120"
+          width="200"
           align="center"
           header-align="center"
           sortable="custom"
         >
           <template #default="scope">
-            <el-button 
-              :type="scope.row.SFYX === '1' ? 'danger' : 'primary'"
-              size="small"
-              @click="scope.row.SFYX === '1' ? handleUnselect(scope.row) : handleSelect(scope.row)"
-            >
-              {{ scope.row.SFYX === '1' ? '退选' : '选课' }}
-            </el-button>
+            <div class="operation-buttons">
+              <el-button 
+                :type="scope.row.SFYX === '1' ? 'danger' : 'primary'"
+                size="small"
+                @click="scope.row.SFYX === '1' ? handleUnselect(scope.row) : handleSelect(scope.row)"
+              >
+                {{ scope.row.SFYX === '1' ? '退选' : '选课' }}
+              </el-button>
+              
+              <el-button
+                v-if="scope.row.SFYX !== '1'"
+                type="success"
+                size="small"
+                @click="handleAddToQueue(scope.row)"
+                :disabled="isInQueue(scope.row.JXBID)"
+                :class="{ 'is-in-queue': isInQueue(scope.row.JXBID) }"
+              >
+                {{ isInQueue(scope.row.JXBID) ? '已在队列' : '加入队列' }}
+              </el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -347,6 +360,25 @@ const handleRefresh = async () => {
   await getXGKC()
 }
 
+// 修改添加到任务队列的方法
+const handleAddToQueue = (course) => {
+  const task = {
+    JXBID: course.JXBID,
+    KCM: course.KCM,
+    SKJS: course.SKJS,
+    XF: course.XF,
+    clazzType: 'XGKC',        // 添加课程类型
+    secretVal: course.secretVal  // 添加secretVal
+  }
+  courseStore.addToTaskQueue(task)
+  ElMessage.success('已添加到任务队列')
+}
+
+// 添加判断课程是否在队列中的方法
+const isInQueue = (jxbid) => {
+  return courseStore.taskQueue.some(task => task.JXBID === jxbid)
+}
+
 onMounted(() => {
   getXGKC()
 })
@@ -519,5 +551,24 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.operation-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+/* 添加已在队列中按钮的样式 */
+.is-in-queue {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* 适配深色模式 */
+@media (prefers-color-scheme: dark) {
+  .is-in-queue {
+    opacity: 0.5;
+  }
 }
 </style>

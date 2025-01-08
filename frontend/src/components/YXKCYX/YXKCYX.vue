@@ -5,6 +5,18 @@
       {{ error }}
     </div>
     <div class="tables-container">
+      <!-- 添加刷新按钮 -->
+      <div class="header-container">
+        <div></div>
+        <el-button 
+          type="primary" 
+          :icon="Refresh"
+          circle
+          @click="handleRefresh"
+          :loading="loading"
+        />
+      </div>
+
       <!-- 公选课表格 -->
       <div class="table-section">
         <h2>公选课</h2>
@@ -101,7 +113,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, computed } from 'vue'
 import { useGlobalStore } from '../../stores/globalStore'
 import { useCourseStore } from '../../stores/courseStore'
 import { ElMessage } from 'element-plus'
@@ -144,7 +156,7 @@ const fawkcSelected = computed(() => {
   return result
 })
 
-// 修改退选处理函数
+// 修改退选处理函数，只更新本地数据
 const handleUnselect = async (course, type) => {
   try {
     if (!globalStore.Authorization || !globalStore.batchId) {
@@ -154,7 +166,7 @@ const handleUnselect = async (course, type) => {
     const result = await window.go.only9464.App.DelClazz(
       globalStore.Authorization,
       globalStore.batchId,
-      type,  // 使用传入的课程类型
+      type,
       course.JXBID,
       course.secretVal
     )
@@ -205,27 +217,39 @@ const handleUnselect = async (course, type) => {
   }
 }
 
-// 刷新处理函数
+// 添加刷新处理函数
 const handleRefresh = async () => {
-  // 清除所有已加载标记
-  courseStore.xgkcLoaded = false
-  courseStore.tjkcLoaded = false
-  courseStore.fawkcLoaded = false
+  loading.value = true
+  error.value = null
   
-  // 重新获取所有数据
-  await Promise.all([
-    window.go.XGKC.App.GetXGKC(globalStore.Authorization, globalStore.batchId),
-    window.go.TJKC.App.GetTJKC(globalStore.Authorization, globalStore.batchId),
-    window.go.FAWKC.App.GetFAWKC(globalStore.Authorization, globalStore.batchId)
-  ]).catch(err => {
+  try {
+    if (!globalStore.Authorization || !globalStore.batchId) {
+      throw new Error('缺少必要的认证信息')
+    }
+
+    // 清除已加载标记
+    courseStore.xgkcLoaded = false
+    courseStore.tjkcLoaded = false
+    courseStore.fawkcLoaded = false
+
+    // 并行获取所有数据
+    await Promise.all([
+      window.go.XGKC.App.GetXGKC(globalStore.Authorization, globalStore.batchId)
+        .then(data => courseStore.setXGKCData(data)),
+      window.go.TJKC.App.GetTJKC(globalStore.Authorization, globalStore.batchId)
+        .then(data => courseStore.setTJKCData(data)),
+      window.go.FAWKC.App.GetFAWKC(globalStore.Authorization, globalStore.batchId)
+        .then(data => courseStore.setFAWKCData(data))
+    ])
+
+    ElMessage.success('数据已更新')
+  } catch (err) {
     error.value = err.message
     ElMessage.error(err.message)
-  })
+  } finally {
+    loading.value = false
+  }
 }
-
-onMounted(() => {
-  handleRefresh()
-})
 </script>
 
 <style scoped>
@@ -258,4 +282,13 @@ h2 {
 }
 
 /* ... 其他样式保持不变 ... */
+
+/* 添加头部容器样式 */
+.header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+  margin-bottom: 20px;
+}
 </style>
