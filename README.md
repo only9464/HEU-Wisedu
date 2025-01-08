@@ -5,10 +5,11 @@ HEU-Wisedu是一款基于[哈尔滨工程大学教务选课系统](https://jwxk.
 > [!WARNING]
 > 本软件完全免费且开源，可二次开发。仅供学习交流使用，请勿用于商业用途，一经发现，将拉黑、并依规向校方举报！！！
 
-欢迎各位同志提交PR，共同完善。
+欢迎各位同志提交[PR](https://github.com/only9464/HEU-Wisedu/pulls)，共同完善。
+**BUG反馈**或者**功能建议**欢迎提交[Issues](https://github.com/only9464/HEU-Wisedu/issues)或者发邮件：[sky9464@qq.com](mailto:sky9464@qq.com)
 
 # 一、优势
-
+- [x] **开源免费**，无需付款，更适合HEU宝宝体质。(担心信息泄露的自己下载源代码编译程序,参考下文**二次开发**部分)
 - [x] 直接调用[选课系统](https://jwxk.hrbeu.edu.cn/)API进行课程相关操作，省去繁杂加载，高峰期选(qiang)课快人一步（
 - [x] 支持跨平台，支持Windows、MacOS、Linux (dddd)
 - [ ] 根据已修学分、培养方案配置显示规则，选课更方便、快捷、具有目的性
