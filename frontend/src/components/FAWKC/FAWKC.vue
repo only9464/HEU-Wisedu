@@ -10,19 +10,19 @@
         </div>
         <div class="header-buttons">
           <el-button 
-            type="success"
-            @click="handleBatchAddToQueue"
-            :loading="loading"
-          >
-            一键添加到任务队列
-          </el-button>
-          <el-button 
             type="primary" 
             :icon="Refresh"
             circle
             @click="handleRefresh"
             :loading="loading"
           />
+          <el-button 
+            type="success"
+            @click="handleBatchAddToQueue"
+            :loading="loading"
+          >
+            一键添加到任务队列
+          </el-button>
         </div>
       </div>
       <el-table 

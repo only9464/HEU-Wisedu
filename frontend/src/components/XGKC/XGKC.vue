@@ -42,19 +42,19 @@
         
         <div class="header-buttons">
           <el-button 
-            type="success"
-            @click="handleBatchAddToQueue"
-            :loading="loading"
-          >
-            一键添加到任务队列
-          </el-button>
-          <el-button 
             type="primary" 
             :icon="Refresh"
             circle
             @click="handleRefresh"
             :loading="loading"
           />
+          <el-button 
+            type="success"
+            @click="handleBatchAddToQueue"
+            :loading="loading"
+          >
+            一键添加到任务队列
+          </el-button>
         </div>
       </div>
       <el-table 
@@ -90,7 +90,7 @@
           sortable="custom"
         >
           <template #default="scope">
-            <div class="multi-line-cell">{{ scope.row.XGXKLB }}</div>
+            <div class="type-cell">{{ scope.row.XGXKLB }}</div>
           </template>
         </el-table-column>
         <el-table-column 
@@ -751,5 +751,13 @@ h1 {
   display: flex;
   gap: 12px;
   align-items: center;
+}
+
+/* 添加类型列的特殊样式 */
+.type-cell {
+  white-space: normal;  /* 允许文字换行 */
+  word-break: break-all;  /* 在任意字符间断行 */
+  line-height: 1.5;
+  padding: 4px 0;
 }
 </style>
