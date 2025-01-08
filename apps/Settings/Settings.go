@@ -44,7 +44,7 @@ func settings(a, b int) int {
 
 // 获取远程的最新版本号
 func get_latest_version_code() string {
-	url := "https://ghproxy.mioe.me/https://raw.githubusercontent.com/only9464/Acrylic/master/Version.code"
+	url := "https://ghproxy.mioe.me/https://raw.githubusercontent.com/only9464/HEU-Wisedu/master/Version.code"
 	response, err := http.Get(url)
 	if err != nil {
 		fmt.Println("Error occurred:", err)

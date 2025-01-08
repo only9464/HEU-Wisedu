@@ -4,7 +4,7 @@
     <div class="task-table-container">
       <div class="table-header">
         <div class="title-section">
-          <h2>任务队列</h2>
+          <h2>任务队列 ({{ taskList.length }})</h2>
           <el-button 
             type="primary" 
             :icon="Refresh"

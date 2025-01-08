@@ -14,6 +14,9 @@ export const useGlobalStore = defineStore('global', {
     batchId: localStorage.getItem('batchId') || '',
     Authorization: localStorage.getItem('Authorization') || '',
     // 其他全局变量...
+    currentVersion: '',
+    latestVersion: '',
+    isLatestVersion: true,
   }),
   
   actions: {
@@ -64,6 +67,23 @@ export const useGlobalStore = defineStore('global', {
       const batches = this.userInfo?.student?.electiveBatchList || []
       if (batches.length > 0) {
         this.setBatchId(batches[0].code)
+      }
+    },
+    // 添加检查更新的方法
+    async checkUpdate() {
+      try {
+        const currentVersion = await window.go.Settings.App.Get_version_code()
+        const latestVersion = await window.go.Settings.App.Get_latest_version_code()
+        const isLatest = await window.go.Settings.App.Check_now_is_latest(currentVersion, latestVersion)
+        
+        this.currentVersion = currentVersion
+        this.latestVersion = latestVersion
+        this.isLatestVersion = isLatest
+        
+        return !isLatest // 返回是否有更新
+      } catch (error) {
+        console.error('检查更新失败:', error)
+        return false
       }
     }
   },

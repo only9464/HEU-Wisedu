@@ -16,11 +16,25 @@
       <div class="setting-option">
         <span class="option-label">当前版本号：</span>
         <div class="option-control">
-          <span>{{ currentVersion }}</span>
-          <div v-if="!is_latest_version">
-            <span>(发现新版本：{{ latestVersion }}
-                          <el-button type="primary" size="small" color="#1e8fa3" @click="UpdateAndRestart">下载并更新重启</el-button>
-              )</span>
+          <span>{{ globalStore.currentVersion }}</span>
+          <div v-if="!globalStore.isLatestVersion">
+            <span>(发现新版本：{{ globalStore.latestVersion }}
+              <el-button 
+                type="primary" 
+                size="small" 
+                color="#1e8fa3" 
+                @click="UpdateAndRestart"
+              >
+                下载并更新重启(慎用)
+              </el-button>
+              <el-button 
+                type="info" 
+                size="small" 
+                @click="openUrlLink('https://ghproxy.mioe.me/https://raw.githubusercontent.com/only9464/HEU-Wisedu/master/build/bin/HEU-Wisedu.exe')"
+              >
+                手动下载
+              </el-button>
+            )</span>
           </div>
         </div>
       </div>
@@ -41,14 +55,14 @@
       </div>
 
       <!-- 配置文件 -->
-      <div class="setting-option">
+      <!-- <div class="setting-option">
         <span class="option-label">配置文件：</span>
         <div class="option-control">
           <span v-if="!configFilePath">配置文件缺失</span>
           <span v-else @click="openFile(configFilePath)">{{ configFilePath }}</span>
           <el-button v-if="!configFilePath" type="primary" size="small" color="#1e8fa3" @click="DownloadConfigFile">立即下载</el-button>
         </div>
-      </div>
+      </div> -->
 
     </div>
   </div>
@@ -62,9 +76,6 @@ import { storeToRefs } from 'pinia'
 // import { ElSelect, ElOption } from 'element-plus'
 
 // 定义响应式变量
-const latestVersion = ref('')
-const currentVersion = ref('')
-const is_latest_version = ref(true)
 const currentProgramPath = ref('')
 
 // 定义可选的更新源
@@ -118,19 +129,10 @@ const executeOnLoad = async () => {
     currentProgramPath.value = current_program_path
     // 获取配置文件路径
     configFilePath.value = await window.go.Settings.App.Get_config_file_path()
-    // 异步获取当前版本号
-    const current_version_code = await window.go.Settings.App.Get_version_code()
-    currentVersion.value = current_version_code
-
-    // 异步获取最新的版本号，并设置到 latestVersion
-    const latest_version_code = await window.go.Settings.App.Get_latest_version_code()
-    latestVersion.value = latest_version_code
-
-    // 检查当前版本是否为最新版本
-    const now_is_latest_version = await window.go.Settings.App.Check_now_is_latest(current_version_code, latest_version_code)
-    is_latest_version.value = now_is_latest_version  // 正确: 使用 .value 更新
-
-    // 其他初始化逻辑
+    
+    // 检查更新（使用 globalStore 中的方法）
+    await globalStore.checkUpdate()
+    
   } catch (error) {
     console.error('执行初始化函数时出错:', error)
   }
@@ -403,5 +405,10 @@ const UpdateAndRestart = () => {
   .adaptive-select .el-input__inner:focus {
     background: rgba(255, 255, 255, 0.3);
   }
+}
+
+/* 添加按钮间距 */
+.option-control .el-button + .el-button {
+  margin-left: 8px;
 }
 </style>

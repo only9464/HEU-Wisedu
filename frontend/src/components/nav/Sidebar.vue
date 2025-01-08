@@ -46,8 +46,13 @@
         <ul>
 
           <li>
-            <router-link to="/setting" class="nav-link">
-              <span>设置</span>
+            <router-link to="/setting" class="nav-link" :class="{ 'has-update': hasUpdate }">
+              <span>
+                设置
+                <el-tag v-if="hasUpdate" size="small" type="danger" effect="dark" class="update-tag">
+                  有更新
+                </el-tag>
+              </span>
             </router-link>
           </li>
 
@@ -58,18 +63,18 @@
 </template>
 
 <script setup>
+import { ref, onMounted, computed } from 'vue'
 import { useGlobalStore } from '../../stores/globalStore'
+import { storeToRefs } from 'pinia'
 
-// 获取store实例
 const globalStore = useGlobalStore()
+const hasUpdate = computed(() => !globalStore.isLatestVersion)
 
-// 使用全局变量
-const toggleTheme = () => {
-  globalStore.setDarkMode(!globalStore.isDarkMode)
-  // 使用计算属性
-  console.log(globalStore.currentTheme)
-}
+onMounted(() => {
+  globalStore.checkUpdate()
+})
 </script>
+
 <style scoped>
 .sidebar-container {
   position: fixed;
@@ -186,6 +191,33 @@ const toggleTheme = () => {
   z-index: 1;
 }
 
+.has-update {
+  position: relative;
+  animation: pulse 2s infinite;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 68, 68, 0.2),
+    rgba(255, 68, 68, 0.1)
+  ) !important;
+}
+
+.update-tag {
+  margin-left: 8px;
+  font-size: 12px;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
 @media (prefers-color-scheme: dark) {
   .acrylic-effect {
     background: linear-gradient(
@@ -208,6 +240,14 @@ const toggleTheme = () => {
   .nav-link:hover,
   .router-link-active {
     color: #ffffff;
+  }
+
+  .has-update {
+    background: linear-gradient(
+      90deg,
+      rgba(255, 68, 68, 0.3),
+      rgba(255, 68, 68, 0.2)
+    ) !important;
   }
 }
 </style>

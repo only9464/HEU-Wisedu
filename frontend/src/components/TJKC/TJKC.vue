@@ -21,7 +21,7 @@
             @click="handleBatchAddToQueue"
             :loading="loading"
           >
-            一键添加到任务队列
+            一键添加到任务队列({{ availableCoursesCount }})
           </el-button>
         </div>
       </div>
@@ -385,6 +385,13 @@ const handleBatchAddToQueue = () => {
 
   ElMessage.success(`成功添加 ${coursesToAdd.length} 门课程到任务队列`)
 }
+
+// 添加计算属性：计算可添加到队列的课程数量
+const availableCoursesCount = computed(() => {
+  return processedData.value.filter(course => 
+    course.SFYX !== '1' && !isInQueue(course.JXBID)
+  ).length
+})
 
 onMounted(() => {
   getTJKC()
