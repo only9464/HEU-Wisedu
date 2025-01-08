@@ -1,6 +1,5 @@
 <template>
   <div class="xgkc-container">
-    <h1>公选课</h1>
     <div v-if="error" class="error">
       {{ error }}
     </div>
@@ -8,23 +7,24 @@
       <div class="table-header">
         <div class="filter-group">
           <el-select
-            v-model="selectedType"
+            v-model="xgkcStore.selectedType"
             placeholder="课程类型筛选"
             clearable
             class="type-filter"
-            :style="{ width: selectWidth }"
+            :popper-append-to-body="false"
           >
             <el-option
               v-for="type in availableTypes"
               :key="type"
               :label="type"
               :value="type"
+              class="type-option"
             />
           </el-select>
-          
+
           <el-input
-            v-model="searchKeyword"
-            placeholder="搜索课程名称"
+            v-model="xgkcStore.searchKeyword"
+            placeholder="搜索"
             clearable
             class="search-input"
           >
@@ -32,15 +32,30 @@
               <el-icon><Search /></el-icon>
             </template>
           </el-input>
+
+          <div class="checkbox-group">
+            <el-checkbox v-model="xgkcStore.hideSelected">只看未选</el-checkbox>
+            <el-checkbox v-model="xgkcStore.onlyNotFull">只看未满</el-checkbox>
+            <el-checkbox v-model="xgkcStore.onlyOnline">只看网络课</el-checkbox>
+          </div>
         </div>
         
-        <el-button 
-          type="primary" 
-          :icon="Refresh"
-          circle
-          @click="handleRefresh"
-          :loading="loading"
-        />
+        <div class="header-buttons">
+          <el-button 
+            type="success"
+            @click="handleBatchAddToQueue"
+            :loading="loading"
+          >
+            一键添加到任务队列
+          </el-button>
+          <el-button 
+            type="primary" 
+            :icon="Refresh"
+            circle
+            @click="handleRefresh"
+            :loading="loading"
+          />
+        </div>
       </div>
       <el-table 
         v-loading="loading"
@@ -108,6 +123,21 @@
           sortable="custom"
         />
         <el-table-column 
+          prop="DYZYRS"
+          label="选课人数" 
+          width="120"
+          align="center"
+          header-align="center"
+          sortable="custom"
+          :sort-method="handleCapacitySort"
+        >
+          <template #default="scope">
+            <el-tag :type="scope.row.SFYM === '1' ? 'danger' : 'success'">
+              {{ scope.row.DYZYRS }} / {{ scope.row.KRL }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column 
           prop="SFYX"
           label="操作" 
           width="200"
@@ -141,21 +171,64 @@
       </el-table>
     </div>
   </div>
+
+  <!-- 添加教师对话框 -->
+  <el-dialog
+    v-model="addTeacherDialogVisible"
+    title="添加要过滤的教师"
+    width="30%"
+  >
+    <el-input
+      v-model="newTeacher"
+      placeholder="请输入教师姓名"
+      clearable
+    />
+    <template #footer>
+      <span class="dialog-footer">
+        <el-button @click="addTeacherDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="addTeacher">
+          确定
+        </el-button>
+      </span>
+    </template>
+  </el-dialog>
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, onMounted, computed, watch, onUnmounted } from 'vue'
 import { useGlobalStore } from '../../stores/globalStore'
 import { useCourseStore } from '../../stores/courseStore'
+import { useXGKCStore } from '../../stores/xgkcStore'
 import { ElMessage } from 'element-plus'
-import { Refresh, Search } from '@element-plus/icons-vue'
+import { Refresh, Search, Plus, Delete } from '@element-plus/icons-vue'
 
 const globalStore = useGlobalStore()
 const courseStore = useCourseStore()
+const xgkcStore = useXGKCStore()
 const loading = ref(false)
 const error = ref(null)
-const selectedType = ref('全部')  // 选中的类型，默认选择"全部"
-const searchKeyword = ref('')  // 添加搜索关键字的响应式变量
+
+// 添加教师过滤相关的响应式变量
+const addTeacherDialogVisible = ref(false)
+const newTeacher = ref('')
+
+// 添加教师过滤相关的方法
+const showAddTeacherDialog = () => {
+  addTeacherDialogVisible.value = true
+  newTeacher.value = ''
+}
+
+const addTeacher = () => {
+  if (newTeacher.value.trim()) {
+    xgkcStore.addFilteredTeacher(newTeacher.value.trim())
+    addTeacherDialogVisible.value = false
+    newTeacher.value = ''  // 清空输入
+  }
+}
+
+const removeTeacher = (teacher) => {
+  xgkcStore.removeFilteredTeacher(teacher)
+}
 
 // 修改 availableTypes 计算属性
 const availableTypes = computed(() => {
@@ -171,21 +244,6 @@ const availableTypes = computed(() => {
 
   // 转换为数组，添加"全部"选项并排序
   return ['全部', ...Array.from(typeSet).sort()]
-})
-
-// 添加计算属性来计算选择框宽度
-const selectWidth = computed(() => {
-  if (!selectedType.value) {
-    return '200px'  // 默认宽度
-  }
-  // 计算文本宽度（假设每个中文字符16px，英文字符8px）
-  const textLength = selectedType.value.split('').reduce((acc, char) => {
-    return acc + (/[\u4e00-\u9fa5]/.test(char) ? 16 : 8)
-  }, 0)
-  // 添加padding和其他UI元素的空间
-  const width = textLength + 60
-  // 设置最小和最大宽度
-  return `${Math.max(200, Math.min(600, width))}px`
 })
 
 // 选课处理函数
@@ -278,21 +336,39 @@ const processedData = computed(() => {
       SKJS: course.SKJS,
       secretVal: course.secretVal,
       XF: course.XF,
-      SFYX: course.SFYX
+      SFYX: course.SFYX,
+      KRL: course.KRL,         // 添加课容量
+      DYZYRS: course.DYZYRS,   // 添加已报人数
+      SFYM: course.SFYM        // 添加是否已满
     }
     result.push(courseInfo)
   }
 
   // 如果选择了类型且不是"全部"，进行筛选
-  if (selectedType.value && selectedType.value !== '全部') {
-    result = result.filter(course => course.XGXKLB === selectedType.value)
+  if (xgkcStore.selectedType && xgkcStore.selectedType !== '全部') {
+    result = result.filter(course => course.XGXKLB === xgkcStore.selectedType)
   }
 
   // 添加关键字筛选
-  if (searchKeyword.value) {
+  if (xgkcStore.searchKeyword) {
     result = result.filter(course => 
-      course.KCM.toLowerCase().includes(searchKeyword.value.toLowerCase())
+      course.KCM.toLowerCase().includes(xgkcStore.searchKeyword.toLowerCase())
     )
+  }
+
+  // 添加只看未满筛选
+  if (xgkcStore.onlyNotFull) {
+    result = result.filter(course => course.SFYM !== '1')
+  }
+
+  // 添加只看网络课筛选
+  if (xgkcStore.onlyOnline) {
+    result = result.filter(course => course.KCM.includes('网络'))
+  }
+
+  // 添加不看已选筛选
+  if (xgkcStore.hideSelected) {
+    result = result.filter(course => course.SFYX !== '1')
   }
 
   // 添加排序逻辑
@@ -303,8 +379,11 @@ const processedData = computed(() => {
       // 处理不同类型的排序
       switch (prop) {
         case 'XF':  // 学分按数字排序
+        case 'KRL':  // 课容量按数字排序
+        case 'DYZYRS':  // 已报人数按数字排序
           compareResult = parseFloat(a[prop]) - parseFloat(b[prop])
           break
+        case 'SFYM':  // 是否已满按数字排序
         case 'SFYX':  // 选课状态按数字排序
           compareResult = parseInt(a[prop]) - parseInt(b[prop])
           break
@@ -379,6 +458,52 @@ const handleAddToQueue = (course) => {
 const isInQueue = (jxbid) => {
   return courseStore.taskQueue.some(task => task.JXBID === jxbid)
 }
+
+// 添加选课人数列的排序方法
+const handleCapacitySort = (a, b) => {
+  // 计算选课比例作为排序依据
+  const ratioA = parseFloat(a.DYZYRS) / parseFloat(a.KRL)
+  const ratioB = parseFloat(b.DYZYRS) / parseFloat(b.KRL)
+  return ratioA - ratioB
+}
+
+// 添加一键添加到任务队列的处理函数
+const handleBatchAddToQueue = () => {
+  // 获取当前展示的课程列表（已经过筛选）
+  const currentCourses = processedData.value
+  
+  // 过滤掉已选课程和已在队列中的课程
+  const coursesToAdd = currentCourses.filter(course => 
+    course.SFYX !== '1' && !isInQueue(course.JXBID)
+  )
+
+  if (coursesToAdd.length === 0) {
+    ElMessage.warning('没有可添加的课程')
+    return
+  }
+
+  // 批量添加到任务队列
+  coursesToAdd.forEach(course => {
+    const task = {
+      JXBID: course.JXBID,
+      KCM: course.KCM,
+      SKJS: course.SKJS,
+      XF: course.XF,
+      clazzType: 'XGKC',
+      secretVal: course.secretVal,
+      KCXZ: course.XGXKLB
+    }
+    courseStore.addToTaskQueue(task)
+  })
+
+  ElMessage.success(`成功添加 ${coursesToAdd.length} 门课程到任务队列`)
+}
+
+// 在组件卸载时重置筛选状态
+onUnmounted(() => {
+  // 如果需要在组件卸载时重置状态，取消注释下面这行
+  // xgkcStore.resetFilters()
+})
 
 onMounted(() => {
   getXGKC()
@@ -488,13 +613,13 @@ h1 {
 }
 
 .type-filter {
-  width: 400px;
-  transition: width 0.3s ease;  /* 添加过渡效果 */
+  width: 240px;  /* 增加宽度以适应长文本 */
+  transition: width 0.3s ease;
 }
 
 /* 确保下拉选项也能完整显示 */
 :deep(.el-select-dropdown__item) {
-  white-space: normal;
+  white-space: normal;  /* 允许文字换行 */
   height: auto;
   padding: 8px 12px;
   line-height: 1.5;
@@ -503,13 +628,14 @@ h1 {
 /* 调整下拉框的最大高度 */
 :deep(.el-select-dropdown) {
   max-height: 400px;
+  min-width: 240px !important;  /* 确保下拉框和选择框宽度一致 */
 }
 
-/* 修改表格单元格样式，支持自动换行 */
-.multi-line-cell {
-  white-space: normal;
-  word-break: break-all;
-  line-height: 1.5;
+/* 确保选择框内的文字不被截断 */
+:deep(.el-select .el-input__inner) {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* 调整表格行高 */
@@ -529,7 +655,7 @@ h1 {
 }
 
 .search-input {
-  width: 200px;
+  width: 120px;  /* 调整宽度以适应"搜索"两个字 */
 }
 
 /* 适配深色模式 */
@@ -571,5 +697,59 @@ h1 {
   .is-in-queue {
     opacity: 0.5;
   }
+}
+
+/* 确保表头文字和排序图标正确对齐 */
+:deep(.el-table__header) th {
+  padding: 8px 0;
+  height: 40px;
+}
+
+:deep(.el-table__header) .cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+/* 添加复选框样式 */
+.el-checkbox {
+  margin-left: 8px;
+  --el-checkbox-font-size: 14px;
+}
+
+/* 适配深色模式 */
+@media (prefers-color-scheme: dark) {
+  .el-checkbox {
+    --el-checkbox-text-color: var(--el-text-color-primary);
+    --el-checkbox-checked-text-color: var(--el-color-primary);
+  }
+}
+
+/* 修改复选框组样式 */
+.checkbox-group {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.el-checkbox {
+  margin: 0;  /* 移除原有的margin-left */
+  --el-checkbox-font-size: 14px;
+}
+
+/* 适配深色模式 */
+@media (prefers-color-scheme: dark) {
+  .el-checkbox {
+    --el-checkbox-text-color: var(--el-text-color-primary);
+    --el-checkbox-checked-text-color: var(--el-color-primary);
+  }
+}
+
+/* 添加按钮组样式 */
+.header-buttons {
+  display: flex;
+  gap: 12px;
+  align-items: center;
 }
 </style>

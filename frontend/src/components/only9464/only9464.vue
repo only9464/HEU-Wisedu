@@ -18,7 +18,7 @@
             type="danger"
             @click="handleClearAll"
           >
-            一键移除
+            清空队列
           </el-button>
           <el-button 
             type="primary"

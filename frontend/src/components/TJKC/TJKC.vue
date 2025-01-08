@@ -1,19 +1,29 @@
 <template>
   <div class="tjkc-container">
-    <h1>培养方案内课程</h1>
     <div v-if="error" class="error">
       {{ error }}
     </div>
     <div class="table-container">
       <div class="table-header">
-        <div></div>
-        <el-button 
-          type="primary" 
-          :icon="Refresh"
-          circle
-          @click="handleRefresh"
-          :loading="loading"
-        />
+        <div class="filter-group">
+          <el-checkbox v-model="tjkcStore.hideSelected">只看未选</el-checkbox>
+        </div>
+        <div class="header-buttons">
+          <el-button 
+            type="success"
+            @click="handleBatchAddToQueue"
+            :loading="loading"
+          >
+            一键添加到任务队列
+          </el-button>
+          <el-button 
+            type="primary" 
+            :icon="Refresh"
+            circle
+            @click="handleRefresh"
+            :loading="loading"
+          />
+        </div>
       </div>
       <el-table 
         v-loading="loading"
@@ -75,6 +85,21 @@
           </template>
         </el-table-column>
         <el-table-column 
+          prop="DYZYRS"
+          label="选课人数" 
+          width="120"
+          align="center"
+          header-align="center"
+          sortable="custom"
+          :sort-method="handleCapacitySort"
+        >
+          <template #default="scope">
+            <el-tag :type="scope.row.SFYM === '1' ? 'danger' : 'success'">
+              {{ scope.row.DYZYRS }} / {{ scope.row.KRL }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column 
           prop="SFYX"
           label="操作" 
           width="200"
@@ -114,11 +139,13 @@
 import { ref, onMounted, computed } from 'vue'
 import { useGlobalStore } from '../../stores/globalStore'
 import { useCourseStore } from '../../stores/courseStore'
+import { useTJKCStore } from '../../stores/tjkcStore'
 import { ElMessage } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
 
 const globalStore = useGlobalStore()
 const courseStore = useCourseStore()
+const tjkcStore = useTJKCStore()
 const loading = ref(false)
 const error = ref(null)
 
@@ -232,13 +259,21 @@ const processedData = computed(() => {
         secretVal: tc.secretVal,
         XF: tc.XF,
         SFYX: tc.SFYX,
-        KCXZ: tc.KCXZ
+        KCXZ: tc.KCXZ,
+        KRL: tc.KRL,         // 添加课容量
+        DYZYRS: tc.DYZYRS,   // 添加已报人数
+        SFYM: tc.SFYM        // 添加是否已满
       }
       result.push(courseInfo)
     }
   }
 
-  // 添加排序逻辑
+  // 添加只看未选筛选
+  if (tjkcStore.hideSelected) {
+    result = result.filter(course => course.SFYX !== '1')
+  }
+
+  // 修改排序逻辑
   if (sortOrder.value.prop) {
     const { prop, order } = sortOrder.value
     result.sort((a, b) => {
@@ -246,8 +281,11 @@ const processedData = computed(() => {
       // 处理不同类型的排序
       switch (prop) {
         case 'XF':  // 学分按数字排序
+        case 'KRL':  // 课容量按数字排序
+        case 'DYZYRS':  // 已报人数按数字排序
           compareResult = parseFloat(a[prop]) - parseFloat(b[prop])
           break
+        case 'SFYM':  // 是否已满按数字排序
         case 'SFYX':  // 选课状态按数字排序
           compareResult = parseInt(a[prop]) - parseInt(b[prop])
           break
@@ -261,6 +299,14 @@ const processedData = computed(() => {
 
   return result
 })
+
+// 添加选课人数列的排序方法
+const handleCapacitySort = (a, b) => {
+  // 计算选课比例作为排序依据
+  const ratioA = parseFloat(a.DYZYRS) / parseFloat(a.KRL)
+  const ratioB = parseFloat(b.DYZYRS) / parseFloat(b.KRL)
+  return ratioA - ratioB
+}
 
 // 添加排序处理函数
 const handleSortChange = ({ prop, order }) => {
@@ -306,6 +352,38 @@ const handleRefresh = async () => {
 // 添加判断课程是否在队列中的方法
 const isInQueue = (jxbid) => {
   return courseStore.taskQueue.some(task => task.JXBID === jxbid)
+}
+
+// 添加一键添加到任务队列的处理函数
+const handleBatchAddToQueue = () => {
+  // 获取当前展示的课程列表
+  const currentCourses = processedData.value
+  
+  // 过滤掉已选课程和已在队列中的课程
+  const coursesToAdd = currentCourses.filter(course => 
+    course.SFYX !== '1' && !isInQueue(course.JXBID)
+  )
+
+  if (coursesToAdd.length === 0) {
+    ElMessage.warning('没有可添加的课程')
+    return
+  }
+
+  // 批量添加到任务队列
+  coursesToAdd.forEach(course => {
+    const task = {
+      JXBID: course.JXBID,
+      KCM: course.KCM,
+      SKJS: course.SKJS,
+      XF: course.XF,
+      clazzType: 'TJKC',
+      secretVal: course.secretVal,
+      KCXZ: course.KCXZ
+    }
+    courseStore.addToTaskQueue(task)
+  })
+
+  ElMessage.success(`成功添加 ${coursesToAdd.length} 门课程到任务队列`)
 }
 
 onMounted(() => {
@@ -412,6 +490,45 @@ h1 {
 @media (prefers-color-scheme: dark) {
   .is-in-queue {
     opacity: 0.5;
+  }
+}
+
+/* 确保表头文字和排序图标正确对齐 */
+:deep(.el-table__header) th {
+  padding: 8px 0;
+  height: 40px;
+}
+
+:deep(.el-table__header) .cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+/* 添加按钮组样式 */
+.header-buttons {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.filter-group {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.el-checkbox {
+  margin: 0;
+  --el-checkbox-font-size: 14px;
+}
+
+/* 适配深色模式 */
+@media (prefers-color-scheme: dark) {
+  .el-checkbox {
+    --el-checkbox-text-color: var(--el-text-color-primary);
+    --el-checkbox-checked-text-color: var(--el-color-primary);
   }
 }
 </style>

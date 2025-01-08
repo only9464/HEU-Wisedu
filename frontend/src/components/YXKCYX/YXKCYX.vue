@@ -1,6 +1,5 @@
 <template>
   <div class="yxkc-container">
-    <h1>已选课程</h1>
     <div v-if="error" class="error">
       {{ error }}
     </div>
@@ -41,6 +40,19 @@
             </template>
           </el-table-column>
           <el-table-column prop="XF" label="学分" width="80" align="center" header-align="center"/>
+          <el-table-column 
+            prop="DYZYRS"
+            label="选课人数" 
+            width="120"
+            align="center"
+            header-align="center"
+          >
+            <template #default="scope">
+              <el-tag :type="scope.row.SFYM === '1' ? 'danger' : 'success'">
+                {{ scope.row.DYZYRS }} / {{ scope.row.KRL }}
+              </el-tag>
+            </template>
+          </el-table-column>
           <el-table-column label="操作" width="120" align="center" header-align="center">
             <template #default="scope">
               <el-button type="danger" size="small" @click="handleUnselect(scope.row, 'XGKC')">
@@ -70,6 +82,19 @@
             </template>
           </el-table-column>
           <el-table-column prop="XF" label="学分" width="80" align="center" header-align="center"/>
+          <el-table-column 
+            prop="DYZYRS"
+            label="选课人数" 
+            width="120"
+            align="center"
+            header-align="center"
+          >
+            <template #default="scope">
+              <el-tag :type="scope.row.SFYM === '1' ? 'danger' : 'success'">
+                {{ scope.row.DYZYRS }} / {{ scope.row.KRL }}
+              </el-tag>
+            </template>
+          </el-table-column>
           <el-table-column label="操作" width="120" align="center" header-align="center">
             <template #default="scope">
               <el-button type="danger" size="small" @click="handleUnselect(scope.row, 'TJKC')">
@@ -99,6 +124,19 @@
             </template>
           </el-table-column>
           <el-table-column prop="XF" label="学分" width="80" align="center" header-align="center"/>
+          <el-table-column 
+            prop="DYZYRS"
+            label="选课人数" 
+            width="120"
+            align="center"
+            header-align="center"
+          >
+            <template #default="scope">
+              <el-tag :type="scope.row.SFYM === '1' ? 'danger' : 'success'">
+                {{ scope.row.DYZYRS }} / {{ scope.row.KRL }}
+              </el-tag>
+            </template>
+          </el-table-column>
           <el-table-column label="操作" width="120" align="center" header-align="center">
             <template #default="scope">
               <el-button type="danger" size="small" @click="handleUnselect(scope.row, 'FAWKC')">
@@ -127,7 +165,12 @@ const error = ref(null)
 // 分别计算三种类型的已选课程
 const xgkcSelected = computed(() => {
   if (!courseStore.xgkcData?.data?.rows) return []
-  return courseStore.xgkcData.data.rows.filter(course => course.SFYX === '1')
+  return courseStore.xgkcData.data.rows.filter(course => course.SFYX === '1').map(course => ({
+    ...course,
+    DYZYRS: course.DYZYRS,
+    KRL: course.KRL,
+    SFYM: course.SFYM
+  }))
 })
 
 const tjkcSelected = computed(() => {
@@ -136,7 +179,12 @@ const tjkcSelected = computed(() => {
   for (const course of courseStore.tjkcData.data.rows) {
     for (const tc of course.tcList) {
       if (tc.SFYX === '1') {
-        result.push(tc)
+        result.push({
+          ...tc,
+          DYZYRS: tc.DYZYRS,
+          KRL: tc.KRL,
+          SFYM: tc.SFYM
+        })
       }
     }
   }
@@ -149,7 +197,12 @@ const fawkcSelected = computed(() => {
   for (const course of courseStore.fawkcData.data.rows) {
     for (const tc of course.tcList) {
       if (tc.SFYX === '1') {
-        result.push(tc)
+        result.push({
+          ...tc,
+          DYZYRS: tc.DYZYRS,
+          KRL: tc.KRL,
+          SFYM: tc.SFYM
+        })
       }
     }
   }
