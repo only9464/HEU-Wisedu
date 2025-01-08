@@ -367,8 +367,9 @@ const handleAddToQueue = (course) => {
     KCM: course.KCM,
     SKJS: course.SKJS,
     XF: course.XF,
-    clazzType: 'XGKC',        // 添加课程类型
-    secretVal: course.secretVal  // 添加secretVal
+    clazzType: 'XGKC',
+    secretVal: course.secretVal,
+    KCXZ: course.XGXKLB  // 使用XGXKLB作为KCXZ
   }
   courseStore.addToTaskQueue(task)
   ElMessage.success('已添加到任务队列')

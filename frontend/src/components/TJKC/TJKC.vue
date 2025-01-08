@@ -28,21 +28,21 @@
           type="index" 
           label="序号" 
           width="60" 
-          align="center"
+          align="center" 
           header-align="center"
         />
         <el-table-column 
           prop="JXBID" 
           label="教学班ID" 
           min-width="180" 
-          align="center"
+          align="center" 
           header-align="center"
         />
         <el-table-column 
           prop="KCM" 
           label="课程名称" 
           min-width="200" 
-          align="center"
+          align="center" 
           header-align="center"
           sortable="custom"
         />
@@ -50,7 +50,7 @@
           prop="SKJS" 
           label="授课教师" 
           min-width="120" 
-          align="center"
+          align="center" 
           header-align="center"
           sortable="custom"
         />
@@ -58,10 +58,22 @@
           prop="XF" 
           label="学分" 
           width="80" 
-          align="center"
+          align="center" 
           header-align="center"
           sortable="custom"
         />
+        <el-table-column 
+          prop="KCXZ" 
+          label="课程性质" 
+          min-width="120" 
+          align="center" 
+          header-align="center"
+          sortable="custom"
+        >
+          <template #default="scope">
+            <div class="multi-line-cell">{{ scope.row.KCXZ }}</div>
+          </template>
+        </el-table-column>
         <el-table-column 
           prop="SFYX"
           label="操作" 
@@ -197,7 +209,8 @@ const handleAddToQueue = (course) => {
     SKJS: course.SKJS,
     XF: course.XF,
     clazzType: 'TJKC',
-    secretVal: course.secretVal
+    secretVal: course.secretVal,
+    KCXZ: course.KCXZ
   }
   courseStore.addToTaskQueue(task)
   ElMessage.success('已添加到任务队列')
@@ -218,7 +231,8 @@ const processedData = computed(() => {
         SKJS: tc.SKJS,
         secretVal: tc.secretVal,
         XF: tc.XF,
-        SFYX: tc.SFYX
+        SFYX: tc.SFYX,
+        KCXZ: tc.KCXZ
       }
       result.push(courseInfo)
     }

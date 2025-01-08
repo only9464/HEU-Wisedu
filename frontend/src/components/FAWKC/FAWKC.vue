@@ -63,6 +63,18 @@
           sortable="custom"
         />
         <el-table-column 
+          prop="KCXZ" 
+          label="课程性质" 
+          min-width="120" 
+          align="center"
+          header-align="center"
+          sortable="custom"
+        >
+          <template #default="scope">
+            <div class="multi-line-cell">{{ scope.row.KCXZ }}</div>
+          </template>
+        </el-table-column>
+        <el-table-column 
           prop="SFYX"
           label="操作" 
           width="200"
@@ -204,7 +216,8 @@ const processedData = computed(() => {
         SKJS: tc.SKJS,
         secretVal: tc.secretVal,
         XF: tc.XF,
-        SFYX: tc.SFYX
+        SFYX: tc.SFYX,
+        KCXZ: tc.KCXZ
       }
       result.push(courseInfo)
     }
@@ -282,8 +295,9 @@ const handleAddToQueue = (course) => {
     KCM: course.KCM,
     SKJS: course.SKJS,
     XF: course.XF,
-    clazzType: 'FAWKC',       // 添加课程类型
-    secretVal: course.secretVal  // 添加secretVal
+    clazzType: 'FAWKC',
+    secretVal: course.secretVal,
+    KCXZ: course.KCXZ
   }
   courseStore.addToTaskQueue(task)
   ElMessage.success('已添加到任务队列')

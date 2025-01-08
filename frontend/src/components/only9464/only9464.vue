@@ -1,18 +1,32 @@
 <template>
   <div class="only9464-container">
-    <h1>抢课助手</h1>
-    
     <!-- 任务队列表格 -->
     <div class="task-table-container">
       <div class="table-header">
-        <h2>任务队列</h2>
-        <el-button 
-          type="primary" 
-          :icon="Refresh"
-          circle
-          @click="handleRefresh"
-          :loading="loading"
-        />
+        <div class="title-section">
+          <h2>任务队列</h2>
+          <el-button 
+            type="primary" 
+            :icon="Refresh"
+            circle
+            @click="handleRefresh"
+            :loading="loading"
+          />
+        </div>
+        <div class="header-buttons">
+          <el-button 
+            type="danger"
+            @click="handleClearAll"
+          >
+            一键移除
+          </el-button>
+          <el-button 
+            type="primary"
+            @click="handleStartTask"
+          >
+            开始抢课任务
+          </el-button>
+        </div>
       </div>
       
       <el-table 
@@ -21,6 +35,7 @@
         style="width: 100%"
         :stripe="true"
         class="acrylic-effect"
+        @sort-change="handleSortChange"
       >
         <el-table-column 
           type="index" 
@@ -32,10 +47,9 @@
         <el-table-column 
           prop="JXBID" 
           label="教学班ID" 
-          min-width="180" 
+          min-width="185" 
           align="center"
           header-align="center"
-          show-overflow-tooltip
         />
         <el-table-column 
           prop="KCM" 
@@ -44,6 +58,7 @@
           align="center"
           header-align="center"
           show-overflow-tooltip
+          sortable="custom"
         />
         <el-table-column 
           prop="SKJS" 
@@ -51,6 +66,7 @@
           min-width="120" 
           align="center"
           header-align="center"
+          sortable="custom"
         >
           <template #default="scope">
             <div class="multi-line-cell">{{ scope.row.SKJS }}</div>
@@ -62,30 +78,32 @@
           width="80" 
           align="center"
           header-align="center"
+          sortable="custom"
         />
+        <el-table-column 
+          prop="KCXZ" 
+          label="课程性质" 
+          min-width="120" 
+          align="center"
+          header-align="center"
+          sortable="custom"
+        >
+          <template #default="scope">
+            <div class="multi-line-cell">{{ scope.row.KCXZ || '-' }}</div>
+          </template>
+        </el-table-column>
         <el-table-column 
           prop="clazzType" 
           label="课程类型" 
           width="120" 
           align="center"
           header-align="center"
+          sortable="custom"
         >
           <template #default="scope">
             <el-tag :type="getTagType(scope.row.clazzType)">
               {{ getClazzTypeLabel(scope.row.clazzType) }}
             </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column 
-          prop="secretVal" 
-          label="密钥值" 
-          min-width="180" 
-          align="center"
-          header-align="center"
-          show-overflow-tooltip
-        >
-          <template #default="scope">
-            <span class="secret-text">{{ scope.row.secretVal }}</span>
           </template>
         </el-table-column>
         <el-table-column 
@@ -112,13 +130,47 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
 import { useCourseStore } from '../../stores/courseStore'
 
 const loading = ref(false)
 const taskList = ref([])
 const courseStore = useCourseStore()
+
+// 修改排序相关的变量，移除默认值
+const sortOrder = ref({
+  prop: null,
+  order: null
+})
+
+// 添加排序处理函数
+const handleSortChange = ({ prop, order }) => {
+  if (!prop) {
+    taskList.value = courseStore.getTaskQueue()
+    return
+  }
+
+  const list = [...courseStore.getTaskQueue()]
+  list.sort((a, b) => {
+    let compareResult = 0
+    // 处理不同类型的排序
+    switch (prop) {
+      case 'XF':  // 学分按数字排序
+        compareResult = parseFloat(a[prop]) - parseFloat(b[prop])
+        break
+      case 'clazzType':  // 课程类型按照预定义顺序排序
+        const typeOrder = { 'TJKC': 1, 'FAWKC': 2, 'XGKC': 3 }
+        compareResult = (typeOrder[a[prop]] || 0) - (typeOrder[b[prop]] || 0)
+        break
+      default:  // 其他字段按字符串排序
+        compareResult = String(a[prop] || '').localeCompare(String(b[prop] || ''), 'zh-CN')
+    }
+    // 根据排序方向调整结果
+    return order === 'ascending' ? compareResult : -compareResult
+  })
+  taskList.value = list
+}
 
 // 获取课程类型标签
 const getClazzTypeLabel = (type) => {
@@ -144,7 +196,13 @@ const getTagType = (type) => {
 const getTaskList = () => {
   loading.value = true
   try {
-    taskList.value = courseStore.getTaskQueue()
+    const list = courseStore.getTaskQueue()
+    // 应用当前的排序
+    if (sortOrder.value.prop) {
+      handleSortChange(sortOrder.value)
+    } else {
+      taskList.value = list
+    }
   } catch (error) {
     ElMessage.error('获取任务列表失败：' + error.message)
   } finally {
@@ -166,6 +224,32 @@ const handleRemoveTask = async (task) => {
 // 刷新任务列表
 const handleRefresh = () => {
   getTaskList()
+}
+
+// 添加一键移除处理函数
+const handleClearAll = () => {
+  ElMessageBox.confirm(
+    '确定要清空任务队列吗？',
+    '警告',
+    {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning',
+    }
+  )
+    .then(() => {
+      courseStore.clearTaskQueue()  // 需要在courseStore中添加这个方法
+      getTaskList()
+      ElMessage.success('任务队列已清空')
+    })
+    .catch(() => {
+      // 用户点击取消，不做任何操作
+    })
+}
+
+// 添加开始抢课任务处理函数
+const handleStartTask = () => {
+  ElMessage.info('功能正在开发')
 }
 
 // 组件加载时获取任务列表
@@ -194,6 +278,18 @@ onMounted(() => {
   align-items: center;
   margin-bottom: 16px;
   padding: 0 8px;
+}
+
+.title-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-buttons {
+  display: flex;
+  gap: 12px;
+  align-items: center;
 }
 
 .acrylic-effect {

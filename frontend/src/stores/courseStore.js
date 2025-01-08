@@ -50,7 +50,8 @@ export const useCourseStore = defineStore('course', {
           SKJS: task.SKJS,
           XF: task.XF,
           clazzType: task.clazzType,
-          secretVal: task.secretVal
+          secretVal: task.secretVal,
+          KCXZ: task.KCXZ
         }
         this.taskQueue.push(newTask)
         // 保存到localStorage
@@ -73,6 +74,11 @@ export const useCourseStore = defineStore('course', {
     // 检查课程是否在队列中
     isInTaskQueue(jxbid) {
       return this.taskQueue.some(task => task.JXBID === jxbid)
+    },
+    // 添加清空任务队列的方法
+    clearTaskQueue() {
+      this.taskQueue = []
+      localStorage.removeItem('taskQueue')
     }
   }
 }) 
