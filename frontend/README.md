@@ -22,8 +22,9 @@ HEU-Wisedu是一款基于[哈尔滨工程大学教务选课系统](https://jwxk.
 - [X] 查看 `培养方案内课程`
 - [X] 查看 `跨专业选修课`
 - [X] 查看 `公选课`
-- [ ] 查看 `本批次已选课程`
-- [ ] 查看 `已修学分` 
+- [x] 查看 `本批次已选课程`
+- [ ] 查看 `所有学期已选课程` 
+- [ ] 查看 `已修学分` 并配置选(qiang)课规则
 - [x] 选课
 - [x] 退选
 - [ ] 自动选课
@@ -32,19 +33,14 @@ HEU-Wisedu是一款基于[哈尔滨工程大学教务选课系统](https://jwxk.
 
 # 三、支持平台
 
-- [X] `Windows`
-- [X] `MacOS`
-- [X] `Linux`
+- [X] `Windows` [下载](https://ghproxy.mioe.me/https://raw.githubusercontent.com/only9464/HEU-Wisedu/master/build/bin/HEU-Wisedu.exe)
+- [X] `MacOS`   [下载](#五-二次开发-3打包)
+- [X] `Linux`   [下载](#五-二次开发-3打包)
 
-# 四、下载
-
-- [X] [Windows 下载](https://ghproxy.mioe.me/https://raw.githubusercontent.com/only9464/HEU-Wisedu/master/build/bin/HEU-Wisedu.exe)
-- [ ] [MacOS 下载]()
-- [ ] [Linux 下载]()
 
 MacOS、Linux 懒得编译了，有需要的可以自己下载源码编译，可以参考 下面的 二次开发 部分
 
-# 五、支持作者
+# 四、支持作者
 
 `赛博乞讨(bushi)：`
 
@@ -52,7 +48,7 @@ MacOS、Linux 懒得编译了，有需要的可以自己下载源码编译，可
 
 ![1736260193604](image/README/1736260193604.png)
 
-# 六、二次开发
+# 五、二次开发
 
 ## 1.安装依赖
 
@@ -108,10 +104,11 @@ wails build
 
 `更多信息请参考：`[Acrylic 二次开发](https://github.com/only9464/Acrylic#%E4%BA%8C%E4%BA%8C%E6%AC%A1%E5%BC%80%E5%8F%91)
 
-# 七、Star History
+# 六、Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=only9464/HEU-Wisedu&type=Date)](https://star-history.com/#only9464/HEU-Wisedu&Date)
 
 
-# 八、更新日志
+# 七、更新日志
+
 
