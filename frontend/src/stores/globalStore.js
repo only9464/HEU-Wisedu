@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { useCourseStore } from './courseStore'
 
 export const useGlobalStore = defineStore('global', {
   state: () => ({
@@ -49,6 +50,9 @@ export const useGlobalStore = defineStore('global', {
       localStorage.removeItem('userInfo')
       localStorage.removeItem('batchId')
       localStorage.removeItem('Authorization')
+      // 清除课程数据
+      const courseStore = useCourseStore()
+      courseStore.clearAllData()
     },
     // 设置选中的批次代码
     setBatchId(code) {

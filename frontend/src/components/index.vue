@@ -112,6 +112,13 @@
           <div class="token-scroll">
             <span class="token-text">{{ globalStore.Authorization }}</span>
           </div>
+          <el-button 
+            type="primary" 
+            size="small"
+            @click="copyToken"
+          >
+            复制
+          </el-button>
         </div>
       </div>
       
@@ -298,20 +305,18 @@ const verifyToken = async () => {
   verifyLoading.value = true
   try {
     ElMessage.info('正在验证Token...')
-    if (!globalStore.Authorization) {
-      throw new Error('未找到Authorization信息')
+    if (!globalStore.Authorization || !globalStore.batchId) {
+      throw new Error('未找到Authorization信息或批次ID')
     }
     
-    const response = await fetch('https://jwxk.hrbeu.edu.cn/xsxk/web/now', {
-      method: 'POST',
-      headers: {
-        'Authorization': globalStore.Authorization
-      }
-    })
+    const result = await window.go.only9464.App.VerifyToken(
+      globalStore.Authorization,
+      globalStore.batchId
+    )
     
-    const data = await response.json()
+    const data = JSON.parse(result)
     
-    if (data.code === 200 && data.msg === '操作成功') {
+    if (data.code === 200 && data.msg === 'success') {
       ElMessage.success('登录状态有效')
     } else {
       throw new Error('登录状态已失效')
@@ -324,6 +329,17 @@ const verifyToken = async () => {
   } finally {
     verifyLoading.value = false
   }
+}
+
+// 复制Token功能
+const copyToken = () => {
+  navigator.clipboard.writeText(globalStore.Authorization)
+    .then(() => {
+      ElMessage.success('Token已复制到剪贴板')
+    })
+    .catch(() => {
+      ElMessage.error('复制失败')
+    })
 }
 
 // 组件加载时获取验证码
@@ -565,6 +581,7 @@ onMounted(() => {
   overflow-x: auto;
   white-space: nowrap;
   padding: 4px;
+  margin-right: 8px;
 }
 
 .token-text {

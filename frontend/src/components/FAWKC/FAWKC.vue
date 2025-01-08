@@ -73,11 +73,11 @@
         >
           <template #default="scope">
             <el-button 
-              type="primary" 
+              :type="scope.row.SFYX === '1' ? 'danger' : 'primary'"
               size="small"
-              @click="handleSelect(scope.row)"
+              @click="scope.row.SFYX === '1' ? handleUnselect(scope.row) : handleSelect(scope.row)"
             >
-              选课
+              {{ scope.row.SFYX === '1' ? '退选' : '选课' }}
             </el-button>
           </template>
         </el-table-column>
@@ -89,28 +89,57 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useGlobalStore } from '../../stores/globalStore'
+import { useCourseStore } from '../../stores/courseStore'
 import { ElMessage } from 'element-plus'
 
 const globalStore = useGlobalStore()
-const responseData = ref(null)
+const courseStore = useCourseStore()
 const loading = ref(false)
 const error = ref(null)
 
 // 选课处理函数
-const handleSelect = (course) => {
-  console.log('选择课程:', course)
-  ElMessage.info('选课功能开发中...')
+const handleSelect = async (course) => {
+  try {
+    if (!globalStore.Authorization || !globalStore.batchId) {
+      throw new Error('缺少必要的认证信息')
+    }
+
+    const result = await window.go.only9464.App.AddClazz(
+      globalStore.Authorization,
+      globalStore.batchId,
+      'FAWKC',  // 这里改为 FAWKC
+      course.JXBID,
+      course.secretVal,
+      '1'
+    )
+
+    const jsonResult = JSON.parse(result)
+    if (jsonResult.code === 200) {
+      ElMessage.success(jsonResult.msg || '选课成功')
+      // 更新课程状态
+      course.SFYX = '1'
+    } else {
+      throw new Error(jsonResult.msg || '选课失败')
+    }
+  } catch (err) {
+    ElMessage.error(err.message)
+  }
+}
+
+// 退选处理函数
+const handleUnselect = (course) => {
+  ElMessage.info('退选功能开发中...')
 }
 
 // 处理数据的计算属性
 const processedData = computed(() => {
-  if (!responseData.value || !responseData.value.data || !responseData.value.data.rows) {
+  if (!courseStore.fawkcData || !courseStore.fawkcData.data || !courseStore.fawkcData.data.rows) {
     return []
   }
 
   const result = []
   // 遍历rows中的每个课程
-  for (const course of responseData.value.data.rows) {
+  for (const course of courseStore.fawkcData.data.rows) {
     // 遍历每个课程的教学班列表
     for (const tc of course.tcList) {
       // 提取所需信息
@@ -119,7 +148,8 @@ const processedData = computed(() => {
         KCM: tc.KCM,
         SKJS: tc.SKJS,
         secretVal: tc.secretVal,
-        XF: tc.XF
+        XF: tc.XF,
+        SFYX: tc.SFYX
       }
       // 将信息添加到结果列表中
       result.push(courseInfo)
@@ -130,6 +160,11 @@ const processedData = computed(() => {
 
 // 获取跨专业选修课程
 const getFAWKC = async () => {
+  // 如果已经加载过数据，就不再请求
+  if (courseStore.fawkcLoaded) {
+    return
+  }
+
   loading.value = true
   error.value = null
   
@@ -142,7 +177,7 @@ const getFAWKC = async () => {
     if (data.code !== 200) {
       throw new Error(data.msg || '获取课程列表失败')
     }
-    responseData.value = data
+    courseStore.setFAWKCData(data)
   } catch (err) {
     error.value = err.message
     ElMessage.error(err.message)

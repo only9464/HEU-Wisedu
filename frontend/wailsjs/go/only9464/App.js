@@ -9,3 +9,7 @@ export function AddClazz(arg1, arg2, arg3, arg4, arg5, arg6) {
 export function Startup(arg1) {
   return window['go']['only9464']['App']['Startup'](arg1);
 }
+
+export function VerifyToken(arg1, arg2) {
+  return window['go']['only9464']['App']['VerifyToken'](arg1, arg2);
+}
