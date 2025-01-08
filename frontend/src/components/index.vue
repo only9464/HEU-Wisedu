@@ -3,7 +3,11 @@
     <h1>HEU-Wisedu首页</h1>
     
     <div class="login-container" v-if="!globalStore.isLoggedIn">
-      <el-form :model="loginForm" class="login-form">
+      <el-form 
+        :model="loginForm" 
+        class="login-form"
+        @keyup.enter="handleLogin"
+      >
         <el-form-item>
           <el-input
             v-model="loginForm.account"
