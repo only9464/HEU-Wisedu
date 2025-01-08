@@ -5,6 +5,16 @@
       {{ error }}
     </div>
     <div class="table-container">
+      <div class="table-header">
+        <div></div>
+        <el-button 
+          type="primary" 
+          :icon="Refresh"
+          circle
+          @click="handleRefresh"
+          :loading="loading"
+        />
+      </div>
       <el-table 
         v-loading="loading"
         :data="processedData" 
@@ -48,24 +58,6 @@
           header-align="center"
         />
         <el-table-column 
-          prop="secretVal" 
-          label="密钥" 
-          min-width="150" 
-          align="left"
-          header-align="center"
-          show-overflow-tooltip
-        >
-          <template #default="scope">
-            <el-tooltip 
-              :content="scope.row.secretVal" 
-              placement="top" 
-              :show-after="500"
-            >
-              <span class="secret-text">{{ scope.row.secretVal.slice(0, 20) }}...</span>
-            </el-tooltip>
-          </template>
-        </el-table-column>
-        <el-table-column 
           label="操作" 
           width="120" 
           align="center"
@@ -91,6 +83,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useGlobalStore } from '../../stores/globalStore'
 import { useCourseStore } from '../../stores/courseStore'
 import { ElMessage } from 'element-plus'
+import { Refresh } from '@element-plus/icons-vue'
 
 const globalStore = useGlobalStore()
 const courseStore = useCourseStore()
@@ -116,8 +109,16 @@ const handleSelect = async (course) => {
     const jsonResult = JSON.parse(result)
     if (jsonResult.code === 200) {
       ElMessage.success(jsonResult.msg || '选课成功')
-      // 更新课程状态
-      course.SFYX = '1'
+      // 更新 store 中的数据
+      const rows = courseStore.tjkcData.data.rows
+      for (const row of rows) {
+        for (const tc of row.tcList) {
+          if (tc.JXBID === course.JXBID) {
+            tc.SFYX = '1'
+            break
+          }
+        }
+      }
     } else {
       throw new Error(jsonResult.msg || '选课失败')
     }
@@ -127,8 +128,39 @@ const handleSelect = async (course) => {
 }
 
 // 退选处理函数
-const handleUnselect = (course) => {
-  ElMessage.info('退选功能开发中...')
+const handleUnselect = async (course) => {
+  try {
+    if (!globalStore.Authorization || !globalStore.batchId) {
+      throw new Error('缺少必要的认证信息')
+    }
+
+    const result = await window.go.only9464.App.DelClazz(
+      globalStore.Authorization,
+      globalStore.batchId,
+      'TJKC',
+      course.JXBID,
+      course.secretVal
+    )
+
+    const jsonResult = JSON.parse(result)
+    if (jsonResult.code === 200) {
+      ElMessage.success(jsonResult.msg || '退选成功')
+      // 更新 store 中的数据
+      const rows = courseStore.tjkcData.data.rows
+      for (const row of rows) {
+        for (const tc of row.tcList) {
+          if (tc.JXBID === course.JXBID) {
+            tc.SFYX = '0'
+            break
+          }
+        }
+      }
+    } else {
+      throw new Error(jsonResult.msg || '退选失败')
+    }
+  } catch (err) {
+    ElMessage.error(err.message)
+  }
 }
 
 // 处理数据的计算属性
@@ -184,6 +216,14 @@ const getTJKC = async () => {
   } finally {
     loading.value = false
   }
+}
+
+// 手动刷新处理函数
+const handleRefresh = async () => {
+  // 清除已加载标记
+  courseStore.tjkcLoaded = false
+  // 重新获取数据
+  await getTJKC()
 }
 
 onMounted(() => {
@@ -264,5 +304,13 @@ h1 {
   .secret-text {
     color: #999;
   }
+}
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 0 8px;
 }
 </style>

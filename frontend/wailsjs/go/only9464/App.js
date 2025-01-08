@@ -6,6 +6,10 @@ export function AddClazz(arg1, arg2, arg3, arg4, arg5, arg6) {
   return window['go']['only9464']['App']['AddClazz'](arg1, arg2, arg3, arg4, arg5, arg6);
 }
 
+export function DelClazz(arg1, arg2, arg3, arg4, arg5) {
+  return window['go']['only9464']['App']['DelClazz'](arg1, arg2, arg3, arg4, arg5);
+}
+
 export function Startup(arg1) {
   return window['go']['only9464']['App']['Startup'](arg1);
 }
