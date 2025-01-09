@@ -31,10 +31,16 @@
             </router-link>
           </li>
           <li>
+            <router-link to="/AllThePast" class="nav-link">
+              <span>所有学期已修课程</span>
+            </router-link>
+          </li>
+          <li>
             <router-link to="/only9464" class="nav-link">
               <span>选(qiang)课助手</span>
             </router-link>
           </li>
+
           <!-- <li>
             <router-link to="/jsfinder" class="nav-link">
               <span>JSFinder</span>

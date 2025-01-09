@@ -64,6 +64,18 @@
         </div>
       </div> -->
 
+      <!-- 验证码识别API地址 -->
+      <div class="setting-option">
+        <span class="option-label">验证码识别API地址：</span>
+        <div class="option-control">
+          <el-input
+            v-model="globalStore.ocrAPIURL"
+            placeholder="请输入API地址"
+            @change="updateOcrAPIURL"
+          />
+        </div>
+      </div>
+
     </div>
   </div>
 </template>
@@ -235,6 +247,10 @@ const DownloadConfigFile = async () => {
 }
 const UpdateAndRestart = () => {
   window.go.Settings.App.UpdateAndRestart()
+}
+
+const updateOcrAPIURL = () => {
+  globalStore.setOcrAPIURL(globalStore.ocrAPIURL)
 }
 </script>
 

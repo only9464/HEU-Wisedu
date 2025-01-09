@@ -6,6 +6,7 @@ import (
 	"HEU-Wisedu/apps/TJKC"
 	"HEU-Wisedu/apps/XGKC"
 	"HEU-Wisedu/apps/YXKCYX"
+	"HEU-Wisedu/apps/login"
 	"HEU-Wisedu/apps/only9464"
 	"context"
 )
@@ -19,6 +20,7 @@ func NewAppManager() *AppManager {
 			FAWKC.NewApp(),
 			XGKC.NewApp(),
 			YXKCYX.NewApp(),
+			login.NewApp(),
 			only9464.NewApp(),
 			Settings.NewApp(),
 			// 在这里添加新的app即可(嘻嘻)*****

@@ -1,7 +1,8 @@
-package LOGIN
+package login
 
 import (
 	"context"
+	"net/http"
 )
 
 // App struct
@@ -22,6 +23,6 @@ func (a *App) Startup(ctx context.Context) {
 
 // 供前端直接调用的函数都写在这里
 
-func (s *App) Template(a, b int) int {
-	return Template(a, b)
+func (a *App) LoginToJwgl(username, password, ocrAPIURL string) (map[string]*http.Cookie, error) {
+	return LoginToJwgl(username, password, ocrAPIURL)
 }
