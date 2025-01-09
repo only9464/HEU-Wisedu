@@ -18,6 +18,10 @@ export const useGlobalStore = defineStore('global', {
     currentVersion: '',
     latestVersion: '',
     isLatestVersion: true,
+    gradeData: localStorage.getItem('gradeData') || null,
+    allCourses: localStorage.getItem('allCourses') || null,
+    courseCategories: localStorage.getItem('courseCategories') ? 
+      JSON.parse(localStorage.getItem('courseCategories')) : {},
   }),
   
   actions: {
@@ -90,6 +94,32 @@ export const useGlobalStore = defineStore('global', {
     setOcrAPIURL(url) {
       this.ocrAPIURL = url
       localStorage.setItem('ocrAPIURL', url)
+    },
+    setGradeData(data) {
+      this.gradeData = data
+      localStorage.setItem('gradeData', data)
+      
+      // 如果还没有 allCourses，则初始化它
+      if (!this.allCourses) {
+        this.setAllCourses(data)
+      }
+    },
+    setAllCourses(data) {
+      this.allCourses = data
+      localStorage.setItem('allCourses', data)
+    },
+    // 设置课程类别
+    setCourseCategory(courseName, category) {
+      this.courseCategories = {
+        ...this.courseCategories,
+        [courseName]: category
+      }
+      localStorage.setItem('courseCategories', JSON.stringify(this.courseCategories))
+    },
+    
+    // 获取课程类别
+    getCourseCategory(courseName) {
+      return this.courseCategories[courseName] || ''
     }
   },
   

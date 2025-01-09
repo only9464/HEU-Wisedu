@@ -2,7 +2,6 @@ package login
 
 import (
 	"context"
-	"net/http"
 )
 
 // App struct
@@ -23,6 +22,11 @@ func (a *App) Startup(ctx context.Context) {
 
 // 供前端直接调用的函数都写在这里
 
-func (a *App) LoginToJwgl(username, password, ocrAPIURL string) (map[string]*http.Cookie, error) {
-	return LoginToJwgl(username, password, ocrAPIURL)
+func (a *App) QueryAllGrade(username, password, ocrAPIURL string) (map[string]interface{}, error) {
+	return QueryAllGrade(username, password, ocrAPIURL)
+}
+
+// 添加保存文件的方法
+func (a *App) SaveGradeToFile(data map[string]interface{}) error {
+	return SaveGradeToFile(data)
 }

@@ -1,3 +1,5 @@
 # build/bin
 node_modules
 frontend/dist
+grade_data.json
+HEU-Wisedu-dev.exe
