@@ -17,7 +17,7 @@
         </el-button>
         <el-button 
           type="primary" 
-          @click="handleQuery"
+          @click="showCaptchaDialog"
           :loading="loading"
         >
           {{ hasLocalData ? '重新查询' : '查询' }}
@@ -209,6 +209,56 @@
         </el-table-column>
       </el-table>
     </div>
+
+    <!-- 验证码弹窗 -->
+    <el-dialog
+      v-model="captchaDialogVisible"
+      title="请输入验证码"
+      width="400px"
+      :close-on-click-modal="false"
+      :show-close="false"
+    >
+      <div class="captcha-dialog-content">
+        <div class="captcha-row">
+          <img 
+            v-if="captcha1.img" 
+            :src="captcha1.img" 
+            alt="验证码1" 
+            @click="refreshCaptcha(1)" 
+          />
+          <el-input
+            v-model="captcha1.value"
+            placeholder="请输入第一个验证码"
+            class="captcha-input"
+          />
+        </div>
+        <div class="captcha-row">
+          <img 
+            v-if="captcha2.img" 
+            :src="captcha2.img" 
+            alt="验证码2" 
+            @click="refreshCaptcha(2)" 
+          />
+          <el-input
+            v-model="captcha2.value"
+            placeholder="请输入第二个验证码"
+            class="captcha-input"
+          />
+        </div>
+      </div>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button type="danger" @click="captchaDialogVisible = false">取消</el-button>
+          <el-button 
+            type="success" 
+            @click="handleQuery"
+            :disabled="!isCaptchasValid"
+          >
+            开始查询
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -242,6 +292,56 @@ const cachedFilters = ref(null)
 
 // 在 script setup 中添加新的响应式变量
 const activeFilter = ref(null)
+
+// 添加验证码相关的响应式变量
+const captcha1 = ref({
+  img: '',
+  value: '',
+  token: ''
+})
+
+const captcha2 = ref({
+  img: '',
+  value: '',
+  token: ''
+})
+
+// 验证码是否有效的计算属性
+const isCaptchasValid = computed(() => {
+  return captcha1.value.value.length === 4 && 
+         captcha2.value.value.length === 4 &&
+         captcha1.value.token && 
+         captcha2.value.token
+})
+
+// 修改获取验证码的函数
+const getCaptcha = async (index) => {
+  try {
+    const result = await window.go.login.App.GetCaptcha()
+    
+    if (index === 1) {
+      captcha1.value = {
+        img: 'data:image/png;base64,' + result.img,
+        value: '',
+        token: result.token
+      }
+    } else {
+      captcha2.value = {
+        img: 'data:image/png;base64,' + result.img,
+        value: '',
+        token: result.token
+      }
+    }
+  } catch (error) {
+    ElMessage.error('获取验证码失败')
+    console.error('获取验证码失败:', error)
+  }
+}
+
+// 刷新验证码
+const refreshCaptcha = (index) => {
+  getCaptcha(index)
+}
 
 // 计算属性：处理后的课程数据（用于表格显示）
 const processedGradeData = computed(() => {
@@ -325,37 +425,121 @@ const filteredGradeData = computed(() => {
   return data
 })
 
-// 处理查询
-const handleQuery = async () => {
-  loading.value = true
-  try {
-    ElMessage.success('开始查询')
-    ElMessage.warning('数据较多，请耐心等待')
-    
-    const result = await window.go.login.App.QueryAllGrade(
-      globalStore.userAccount,
-      globalStore.userPassword,
-      globalStore.ocrAPIURL
-    )
+// 添加cookies相关的状态
+const savedCookies = ref(null)
 
-    // 检查查询结果
-    if (result.datas?.xscjcx?.extParams?.msg === '查询成功') {
-      loginResult.value = result
-      globalStore.setGradeData(JSON.stringify(result))
-      globalStore.setAllCourses(JSON.stringify(result))
+// 添加弹窗控制变量
+const captchaDialogVisible = ref(false)
+
+// 显示验证码弹窗
+const showCaptchaDialog = () => {
+  if (savedCookies.value) {
+    // 如果有保存的cookies，直接查询
+    handleQuery()
+  } else {
+    // 否则显示验证码弹窗
+    captchaDialogVisible.value = true
+    // 获取验证码
+    getCaptcha(1)
+    getCaptcha(2)
+  }
+}
+
+// 修改查询函数
+const handleQuery = async () => {
+  // 验证码检查
+  if (!savedCookies.value && !isCaptchasValid.value) {
+    ElMessage.warning('请输入两个验证码')
+    return
+  }
+
+  // 关闭弹窗
+  captchaDialogVisible.value = false
+  
+  loading.value = true
+  error.value = null
+
+  try {
+    let result
+    
+    if (savedCookies.value) {
+      // 使用保存的cookies进行查询
+      ElMessage.info('正在查询')
+      console.log('使用保存的cookies进行查询')
+      result = await window.go.login.App.QueryAllGrade(
+        '', '', '', '', '', '', 
+        savedCookies.value
+      )
+    } else {
+      // 使用验证码登录
+      ElMessage.info('正在查询，请耐心等候')
+      console.log('使用验证码登录进行查询')
+      result = await window.go.login.App.QueryAllGrade(
+        globalStore.userAccount,
+        globalStore.userPassword,
+        captcha1.value.value,
+        captcha1.value.token,
+        captcha2.value.value,
+        captcha2.value.token,
+        null
+      )
+
+      // 保存cookies到localStorage
+      if (result.cookies) {
+        const simplifiedCookies = {}
+        for (const [name, cookie] of Object.entries(result.cookies)) {
+          simplifiedCookies[name] = {
+            name: cookie.Name,
+            value: cookie.Value,
+            path: cookie.Path,
+            domain: cookie.Domain,
+          }
+        }
+        savedCookies.value = simplifiedCookies
+        localStorage.setItem('gradeCookies', JSON.stringify(simplifiedCookies))
+      }
+    }
+
+    if (result.data) {
+      globalStore.setGradeData(JSON.stringify(result.data))
       ElMessage.success('查询成功')
     } else {
-      throw new Error(result.datas?.xscjcx?.extParams?.msg || '查询失败，请稍后重试')
+      throw new Error('查询失败：返回结果为空')
     }
-  } catch (error) {
-    ElMessage.error('查询失败：' + error.message)
-    loginResult.value = null
+  } catch (err) {
+    console.error('查询失败：', err)
+    error.value = err.message
+    
+    if (savedCookies.value) {
+      // 如果是使用cookies失败，清除cookies并提示重新登录
+      savedCookies.value = null
+      localStorage.removeItem('gradeCookies')
+      ElMessage.error('身份认证已过期，请再次使用验证码登录')
+      // 显示验证码弹窗并刷新验证码
+      captchaDialogVisible.value = true
+      getCaptcha(1)
+      getCaptcha(2)
+    } else {
+      ElMessage.error(err.message)
+      // 如果是验证码登录失败，重新显示弹窗
+      captchaDialogVisible.value = true
+    }
   } finally {
     loading.value = false
   }
 }
 
-// 清除本地数据时同时清除两个存储
+// 在组件挂载时尝试从localStorage读取cookies
+onMounted(() => {
+  const storedCookies = localStorage.getItem('gradeCookies')
+  if (storedCookies) {
+    savedCookies.value = JSON.parse(storedCookies)
+  }
+  getCaptcha(1)
+  getCaptcha(2)
+})
+
+// 清除本地数据时也清除cookies和其他数据
 const clearLocalData = () => {
   ElMessageBox.confirm(
     '确定要清除本地缓存的成绩数据吗？',
@@ -366,19 +550,38 @@ const clearLocalData = () => {
       type: 'warning',
     }
   ).then(() => {
+    // 清除全局存储中的数据
     globalStore.setGradeData(null)
     globalStore.setAllCourses(null)
+    
+    // 清除本地变量
     loginResult.value = null
+    savedCookies.value = null
+    
+    // 清除localStorage中的数据
+    localStorage.removeItem('gradeCookies')
+    localStorage.removeItem('gradeData')
+    localStorage.removeItem('allCourses')
+    
+    // 重置验证码
+    captcha1.value = {
+      img: '',
+      value: '',
+      token: ''
+    }
+    captcha2.value = {
+      img: '',
+      value: '',
+      token: ''
+    }
+    
+    // 重新获取验证码
+    getCaptcha(1)
+    getCaptcha(2)
+    
     ElMessage.success('本地数据已清除')
   }).catch(() => {})
 }
-
-// 在组件加载时设置总数
-onMounted(() => {
-  if (!globalStore.gradeData) {
-    ElMessage.info('暂无本地缓存数据，请点击查询按钮获取成绩')
-  }
-})
 
 // 根据成绩返回对应的样式类名
 const getScoreClass = (score) => {
@@ -470,13 +673,13 @@ const publicCourseCredits = computed(() => {
       return course.type === '公选' && isPassingGrade(course.score)
     })
     .forEach(course => {
-      const category = course.category || '未分类'
+      const category = course.category || '未分类的公选课'
       credits[category] = (credits[category] || 0) + parseFloat(course.credit)
     })
   
   // 按类别A-F和A0排序
   const orderedCredits = {}
-  const order = ['A', 'B', 'C', 'D', 'E', 'F', 'A0', '未分类']
+  const order = ['A', 'B', 'C', 'D', 'E', 'F', 'A0', '未分类的公选课']
   order.forEach(category => {
     if (credits[category]) {
       orderedCredits[category] = Number(credits[category].toFixed(1))  // 保留一位小数
@@ -537,6 +740,9 @@ const handleTagClick = (filter) => {
     activeFilter.value = filter
   }
 }
+
+// 在 script setup 中添加
+const error = ref(null)
 </script>
 
 <style scoped>
@@ -870,6 +1076,77 @@ pre {
   .custom-cyan-tag {
     background-color: #1abc9c !important;
     border-color: #1abc9c !important;
+  }
+}
+
+.captcha-section {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.captcha-group {
+  display: flex;
+  gap: 16px;
+}
+
+.captcha-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.captcha-container img {
+  height: 32px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.captcha-input {
+  width: 80px;
+}
+
+/* 适配深色模式 */
+@media (prefers-color-scheme: dark) {
+  .captcha-container img {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}
+
+.captcha-dialog-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 0 20px;
+}
+
+.captcha-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.captcha-row img {
+  height: 32px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.captcha-input {
+  flex-grow: 1;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 20px;
+}
+
+/* 适配深色模式 */
+@media (prefers-color-scheme: dark) {
+  .captcha-row img {
+    border: 1px solid rgba(255, 255, 255, 0.1);
   }
 }
 </style>

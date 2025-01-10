@@ -10,24 +10,29 @@ import (
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/tidwall/gjson"
 )
 
 // LoginToJwgl 登录教务管理系统
 // 参数：统一身份认证的账号、密码、验证码识别API的URL
 // 返回值：教务管理系统首页的cookies
-func LoginToJwgl(username, password, ocrAPIURL string) (map[string]*http.Cookie, error) {
-	// 第一次登录获取 astraeus_session
-	_, lastAstraeusSession, err := loginAndFollowRedirects(username, password, "", ocrAPIURL)
+func LoginToJwgl(username, password, captcha1, token1, captcha2, token2 string) (map[string]*http.Cookie, error) {
+	// fmt.Printf("开始第一次登录尝试...\n")
+	// 第一次登录使用第一个验证码
+	_, lastAstraeusSession, err := loginAndFollowRedirects(username, password, "", captcha1, token1)
 	if err != nil {
+		// fmt.Printf("第一次登录失败：%v\n", err)
 		return nil, fmt.Errorf("第一次登录失败: %v", err)
 	}
+	// fmt.Printf("第一次登录成功，获取到 astraeus_session: %s\n", lastAstraeusSession)
 
-	// 使用获取到的 astraeus_session 进行第二次登录
-	cookies2, _, err := loginAndFollowRedirects(username, password, lastAstraeusSession, ocrAPIURL)
+	// fmt.Printf("开始第二次登录尝试...\n")
+	// 使用获取到的 astraeus_session 和第二个验证码进行第二次登录
+	cookies2, _, err := loginAndFollowRedirects(username, password, lastAstraeusSession, captcha2, token2)
 	if err != nil {
+		// fmt.Printf("第二次登录失败：%v\n", err)
 		return nil, fmt.Errorf("第二次登录失败: %v", err)
 	}
+	// fmt.Printf("第二次登录成功\n")
 
 	return cookies2, nil
 }
@@ -125,9 +130,8 @@ func getLoginParams(astraeusSession string) (*LoginParams, error) {
 	return nil, fmt.Errorf("无法获取登录参数")
 }
 
-// getCaptcha 获取并识别验证码
-func getCaptcha(ocrAPIURL string) (string, string, error) {
-	// 第一步：获取验证码图片和token
+// GetCaptcha 获取验证码
+func GetCaptcha() (string, string, error) {
 	resp, err := http.Get("https://cas-443.wvpn.hrbeu.edu.cn/sso/apis/v2/open/captcha?imageWidth=100&captchaSize=4")
 	if err != nil {
 		return "", "", err
@@ -143,31 +147,7 @@ func getCaptcha(ocrAPIURL string) (string, string, error) {
 		return "", "", err
 	}
 
-	// 第二步：识别验证码
-	data := url.Values{}
-	data.Set("image", result.Img)
-	data.Set("probability", "false")
-	data.Set("png_fix", "false")
-
-	ocrResp, err := http.PostForm(ocrAPIURL, data)
-	if err != nil {
-		return "", "", err
-	}
-	defer ocrResp.Body.Close()
-
-	body, err := io.ReadAll(ocrResp.Body)
-	if err != nil {
-		return "", "", err
-	}
-
-	code := gjson.Get(string(body), "code").String()
-	message := gjson.Get(string(body), "message").String()
-	captcha := gjson.Get(string(body), "data").String()
-
-	if code == "200" && message == "Success" {
-		return captcha, result.Token, nil
-	}
-	return "", "", fmt.Errorf("验证码识别失败: %s", message)
+	return result.Img, result.Token, nil
 }
 
 // login 执行登录请求
@@ -204,18 +184,14 @@ func login(INGRESSCOOKIE, JSESSIONID, username, password, captcha, token, lt, so
 }
 
 // loginAndFollowRedirects 执行登录流程并跟踪所有重定向
-func loginAndFollowRedirects(username, password, astraeusSession string, ocrAPIURL string) (map[string]*http.Cookie, string, error) {
+func loginAndFollowRedirects(username, password, astraeusSession, captcha, token string) (map[string]*http.Cookie, string, error) {
 	// 获取登录参数
 	loginParams, err := getLoginParams(astraeusSession)
 	if err != nil {
+		fmt.Printf("获取登录参数失败：%v\n", err)
 		return nil, "", err
 	}
-
-	// 获取验证码和token
-	captcha, token, err := getCaptcha(ocrAPIURL)
-	if err != nil {
-		return nil, "", err
-	}
+	// fmt.Printf("获取到登录参数：lt=%s, source=%s\n", loginParams.Lt, loginParams.Source)
 
 	// 创建session来处理重定向
 	jar, _ := cookiejar.New(nil)
@@ -240,9 +216,10 @@ func loginAndFollowRedirects(username, password, astraeusSession string, ocrAPIU
 		loginParams.Execution,
 	)
 	if err != nil {
+		fmt.Printf("登录请求失败：%v\n", err)
 		return nil, "", err
 	}
-	defer resp.Body.Close()
+	// fmt.Printf("登录请求响应状态码：%d\n", resp.StatusCode)
 
 	// fmt.Println("\n第1次请求：https://cas-443.wvpn.hrbeu.edu.cn/cas/login")
 	// fmt.Printf("响应状态码: %d\n", resp.StatusCode)

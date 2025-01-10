@@ -12,13 +12,23 @@ import (
 )
 
 // QueryAllGrade 查询所有学期成绩
-// 参数：统一身份认证的账号、密码、验证码识别API的URL
-// 返回值：成绩查询结果的json字符串
-func QueryAllGrade(username, password, ocrAPIURL string) (map[string]interface{}, error) {
-	// 登录获取cookies
-	allCookies, err := LoginToJwgl(username, password, ocrAPIURL)
-	if err != nil {
-		return nil, fmt.Errorf("登录失败: %v", err)
+// 可以通过两种方式调用：
+// 1. 使用账号密码和验证码登录：username, password, captcha1, token1, captcha2, token2 都不为空，cookies为nil
+// 2. 使用已有cookies：cookies不为nil，其他参数为空
+func QueryAllGrade(username, password, captcha1, token1, captcha2, token2 string, cookies map[string]*http.Cookie) (map[string]interface{}, error) {
+	var allCookies map[string]*http.Cookie
+	var err error
+	var result map[string]interface{}
+
+	if cookies != nil {
+		// 使用已有cookies模式
+		allCookies = cookies
+	} else {
+		// 使用账号密码登录模式
+		allCookies, err = LoginToJwgl(username, password, captcha1, token1, captcha2, token2)
+		if err != nil {
+			return nil, fmt.Errorf("登录失败: %v", err)
+		}
 	}
 
 	// 创建HTTP客户端
@@ -100,12 +110,15 @@ func QueryAllGrade(username, password, ocrAPIURL string) (map[string]interface{}
 	}
 
 	// 解析 JSON 到 map
-	var result map[string]interface{}
 	if err := json.Unmarshal(body, &result); err != nil {
 		return nil, fmt.Errorf("解析成绩数据失败: %v", err)
 	}
 
-	return result, nil
+	// 将结果和cookies一起返回
+	return map[string]interface{}{
+		"data":    result,
+		"cookies": allCookies,
+	}, nil
 }
 
 // SaveGradeToFile 将成绩数据保存到本地文件

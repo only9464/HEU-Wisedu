@@ -2,6 +2,7 @@ package login
 
 import (
 	"context"
+	"net/http"
 )
 
 // App struct
@@ -22,11 +23,24 @@ func (a *App) Startup(ctx context.Context) {
 
 // 供前端直接调用的函数都写在这里
 
-func (a *App) QueryAllGrade(username, password, ocrAPIURL string) (map[string]interface{}, error) {
-	return QueryAllGrade(username, password, ocrAPIURL)
+func (a *App) QueryAllGrade(username, password, captcha1, token1, captcha2, token2 string, cookies map[string]*http.Cookie) (map[string]interface{}, error) {
+	return QueryAllGrade(username, password, captcha1, token1, captcha2, token2, cookies)
 }
 
 // 添加保存文件的方法
 func (a *App) SaveGradeToFile(data map[string]interface{}) error {
 	return SaveGradeToFile(data)
+}
+
+// GetCaptcha 获取验证码
+func (a *App) GetCaptcha() (map[string]string, error) {
+	img, token, err := GetCaptcha()
+	if err != nil {
+		return nil, err
+	}
+
+	return map[string]string{
+		"img":   img,
+		"token": token,
+	}, nil
 }

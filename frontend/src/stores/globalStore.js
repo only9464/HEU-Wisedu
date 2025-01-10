@@ -8,8 +8,6 @@ export const useGlobalStore = defineStore('global', {
     // 添加账号密码字段，从localStorage读取保存的值
     userAccount: localStorage.getItem('userAccount') || '',
     userPassword: localStorage.getItem('userPassword') || '',
-    ocrAPIURL: localStorage.getItem('ocrAPIURL') || 'https://ocr.mioe.fun/ocr',
-    // 添加用户信息字段
     userInfo: localStorage.getItem('userInfo') ? JSON.parse(localStorage.getItem('userInfo')) : null,
     // 当前选中的批次代码
     batchId: localStorage.getItem('batchId') || '',
@@ -90,10 +88,6 @@ export const useGlobalStore = defineStore('global', {
         console.error('检查更新失败:', error)
         return false
       }
-    },
-    setOcrAPIURL(url) {
-      this.ocrAPIURL = url
-      localStorage.setItem('ocrAPIURL', url)
     },
     setGradeData(data) {
       this.gradeData = data
