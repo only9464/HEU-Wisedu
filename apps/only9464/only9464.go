@@ -2,6 +2,8 @@ package only9464
 
 import (
 	"fmt"
+	"github.com/tidwall/gjson"
+	_ "github.com/tidwall/gjson"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -184,4 +186,36 @@ func (a *App) DelClazz(Authorization string, batchId string, clazzType string, c
 
 	// 直接返回JSON字符串
 	return string(body), nil
+}
+
+// TaskListAddClazz 批量添加课程
+func (a *App) TaskListAddClazz(Authorization string, batchID string, taskListJSON string) ([]string, []error) {
+	// 解析 JSON 数组
+	result := gjson.Parse(taskListJSON)
+	if !result.IsArray() {
+		return nil, []error{fmt.Errorf("JSON 数据不是数组")}
+	}
+
+	results := make([]string, len(result.Array()))
+	errors := make([]error, len(result.Array()))
+
+	for i, task := range result.Array() {
+		fmt.Println("TaskListAddClazz", task.Get("clazzType").String())
+		fmt.Println("TaskListAddClazz", task.Get("JXBID").String())
+		fmt.Println("TaskListAddClazz", task.Get("secretVal").String())
+		clazzType := task.Get("clazzType").String()
+		clazzId := task.Get("clazzId").String()
+		secretVal := task.Get("secretVal").String()
+		//chooseVolunteer := task.Get("chooseVolunteer").String()
+		chooseVolunteer := "1"
+
+		result, err := a.AddClazz(Authorization, batchID, clazzType, clazzId, secretVal, chooseVolunteer)
+		if err != nil {
+			errors[i] = err
+		} else {
+			results[i] = result
+		}
+	}
+
+	return results, errors
 }

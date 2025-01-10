@@ -133,7 +133,9 @@ import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
 import { useCourseStore } from '../../stores/courseStore'
+import {useGlobalStore} from "../../stores/globalStore.js";
 
+const globalStore = useGlobalStore()
 const loading = ref(false)
 const taskList = ref([])
 const courseStore = useCourseStore()
@@ -248,9 +250,75 @@ const handleClearAll = () => {
 }
 
 // 添加开始抢课任务处理函数
-const handleStartTask = () => {
+const handleStartTask = async () => {
   ElMessage.info('功能正在开发')
+  // 获取任务队列内容
+  const taskQueue = courseStore.getTaskQueue();
+
+  // 将任务队列内容转换为 JSON 字符串
+  const taskQueueJSON = JSON.stringify(taskQueue);
+
+  // // 使用 ElMessageBox 弹出对话框显示任务队列内容
+  // ElMessageBox.alert(
+  //     JSON.stringify(taskQueue, null, 2),
+  //     '任务队列内容',
+  //     {
+  //       confirmButtonText: '确定',
+  //       dangerouslyUseHTMLString: true, // 允许使用 HTML 内容
+  //       customClass: 'task-queue-dialog'
+  //     }
+  // );
+
+  try {
+    if (!globalStore.Authorization || !globalStore.batchId) {
+      throw new Error('缺少必要的认证信息')
+    }
+
+    // 修正参数顺序：Authorization, batchID, taskListJSON
+    const [results, errors] = await window.go.only9464.App.TaskListAddClazz(
+        globalStore.Authorization,
+        globalStore.batchId,
+        taskQueueJSON
+    );
+    // 显示结果消息
+    await ElMessageBox.alert(
+        results,
+        '任务执行结果',
+        {
+          confirmButtonText: '确定',
+          dangerouslyUseHTMLString: true, // 允许使用 HTML 内容
+          customClass: 'task-results-dialog'
+        }
+    );
+
+    // 处理结果和错误
+    let successCount = 0;
+    let errorCount = 0;
+    let resultsMessage = '';
+
+    results.forEach((result, index) => {
+      if (errors[index]) {
+        resultsMessage += `任务 ${index + 1} 失败: ${errors[index].message}\n`;
+        errorCount++;
+      } else {
+        resultsMessage += `任务 ${index + 1} 成功: ${result}\n`;
+        successCount++;
+      }
+    });
+
+    if (successCount > 0 && errorCount === 0) {
+      ElMessage.success('所有任务启动成功');
+    } else if (successCount > 0 && errorCount > 0) {
+      ElMessage.warning(`部分任务启动成功，部分任务失败`);
+    } else {
+      ElMessage.error('所有任务启动失败');
+    }
+  } catch (error) {
+    ElMessage.error('任务队列启动失败：' + error.message);
+  }
 }
+
+
 
 // 组件加载时获取任务列表
 onMounted(() => {
