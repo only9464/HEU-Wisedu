@@ -313,29 +313,33 @@ const handleSortChange = ({ prop, order }) => {
   sortOrder.value = { prop, order }
 }
 
+// 修改错误处理逻辑
+const handleError = (err) => {
+  if (err.message && err.message.includes('缺少必要的认证信息')) {
+    error.value = '缺少必要的认证信息，请先登录选课系统'
+  } else {
+    error.value = err.message
+  }
+  ElMessage.error(error.value)
+}
+
 // 获取培养方案内课程
 const getTJKC = async () => {
-  // 如果已经加载过数据，就不再请求
-  if (courseStore.tjkcLoaded) {
-    return
-  }
-
   loading.value = true
   error.value = null
   
   try {
     if (!globalStore.Authorization || !globalStore.batchId) {
-      throw new Error('缺少必要的认证信息')
+      throw new Error('缺少必要的认证信息，请先登录选课系统')
     }
-
-    const data = await window.go.TJKC.App.GetTJKC(globalStore.Authorization, globalStore.batchId)
-    if (data.code !== 200) {
-      throw new Error(data.msg || '获取课程列表失败')
-    }
-    courseStore.setTJKCData(data)
+    
+    const result = await window.go.TJKC.App.GetTJKC(
+      globalStore.Authorization,
+      globalStore.batchId
+    )
+    courseStore.setTJKCData(result)
   } catch (err) {
-    error.value = err.message
-    ElMessage.error(err.message)
+    handleError(err)
   } finally {
     loading.value = false
   }

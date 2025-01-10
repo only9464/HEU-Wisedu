@@ -49,7 +49,7 @@
             :loading="loading"
             style="width: 100%"
           >
-            登录
+            登录选课系统
           </el-button>
         </el-form-item>
       </el-form>
@@ -258,6 +258,9 @@ const handleLogin = async () => {
     return
   }
   
+  // 在登录请求前就保存账号密码
+  globalStore.setUserCredentials(loginForm.account, loginForm.password)
+  
   loading.value = true
   try {
     // 加密密码
@@ -276,8 +279,6 @@ const handleLogin = async () => {
     if (loginResult.code === 200 && loginResult.msg === '登录成功') {
       // 保存用户信息到全局状态
       globalStore.setUserInfo(loginResult.data)
-      // 直接保存账号密码
-      globalStore.setUserCredentials(loginForm.account, loginForm.password)
       // 初始化选中批次
       globalStore.initSelectedBatch()
       
