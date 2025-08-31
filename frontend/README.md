@@ -38,7 +38,7 @@ Gitee地址：[https://gitee.com/only9464/HEU-Wisedu](https://gitee.com/only9464
 
 # 三、下载
 
-- [X] Windows[下载](https://ghproxy.mioe.me/https://raw.githubusercontent.com/only9464/HEU-Wisedu/master/build/bin/HEU-Wisedu.exe)
+- [X] Windows[下载](https://ghproxy.heu.us.kg/https://raw.githubusercontent.com/only9464/HEU-Wisedu/master/build/bin/HEU-Wisedu.exe)
 - [ ] MacOS  [下载](#3打包)
 - [ ] Linux  [下载](#3打包)
 

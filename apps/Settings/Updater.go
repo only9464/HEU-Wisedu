@@ -29,7 +29,7 @@ func downloadFile(url, dest string) error {
 
 // 更新程序
 func Update() {
-	url := "https://ghproxy.mioe.me/https://raw.githubusercontent.com/only9464/HEU-Wisedu/master/build/bin/HEU-Wisedu.exe"
+	url := "https://ghproxy.heu.us.kg/https://raw.githubusercontent.com/only9464/HEU-Wisedu/master/build/bin/HEU-Wisedu.exe"
 
 	// 获取当前程序路径
 	exePath, err := os.Executable()

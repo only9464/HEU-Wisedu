@@ -4,14 +4,16 @@ import Sidebar from './components/nav/Sidebar.vue'
 
 // 授权相关状态
 const authToken = ref('')
-const isAuthorized = ref(false)
+const isAuthorized = ref(true)
 const showAuthDialog = ref(false)
+//const isAuthorized = ref(false)
+// const showAuthDialog = ref(false)
 const authInput = ref('')
 const authError = ref('')
 const isVerifying = ref(false)
 
 // Cloudflare Worker URL
-const WORKER_URL = 'https://heu-wisedu.sky9464.workers.dev'
+const WORKER_URL = 'https://heu.qzz.io'
 
 // 检查本地存储的授权码
 const checkLocalAuth = () => {
@@ -80,7 +82,7 @@ const getWatt = () => {
 
 // 组件挂载时检查授权状态
 onMounted(() => {
-  checkLocalAuth()
+  // checkLocalAuth()
 })
 </script>
 
