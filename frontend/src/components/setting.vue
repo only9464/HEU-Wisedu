@@ -49,7 +49,7 @@
               <el-button 
                 type="info" 
                 size="small" 
-                @click="openUrlLink('https://ghproxy.mioe.me/https://raw.githubusercontent.com/only9464/HEU-Wisedu/master/build/bin/HEU-Wisedu.exe')"
+                @click="openUrlLink('https://gh-proxy.com/https://raw.githubusercontent.com/only9464/HEU-Wisedu/master/build/bin/HEU-Wisedu.exe')"
               >
                 手动下载
               </el-button>

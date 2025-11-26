@@ -3,8 +3,6 @@ package Settings
 import (
 	"context"
 	"fmt"
-	"io"
-	"net/http"
 	"os"
 	"path/filepath"
 )
@@ -68,38 +66,6 @@ func (a *App) Get_config_file_path() string {
 		return filePath
 	}
 	return ""
-}
-
-func (a *App) Download_config_file() bool {
-	// 将 "https://ghproxy.mioe.me/https://raw.githubusercontent.com/only9464/Acrylic/master/build/bin/config.json" 下载到当前目录下并保存成config.json
-	url := "https://ghproxy.mioe.me/https://raw.githubusercontent.com/HEU-Wisedu/master/build/bin/config.json"
-	response, err := http.Get(url)
-	if err != nil {
-		fmt.Println("Error occurred:", err)
-		return false
-	}
-	// 如果状态码为200，则下载成功
-	if response.StatusCode == 200 {
-		fmt.Println("配置文件下载成功")
-	} else {
-		fmt.Println("配置文件下载失败")
-		return false
-	}
-	defer response.Body.Close()
-	// 将下载到的内容写入到当前目录下的config.json文件中
-	filePath := filepath.Join(a.Get_current_program_path(), "config.json")
-	file, err := os.Create(filePath)
-	if err != nil {
-		fmt.Println("Error occurred:", err)
-		return false
-	}
-	defer file.Close()
-	_, err = io.Copy(file, response.Body)
-	if err != nil {
-		fmt.Println("Error occurred:", err)
-		return false
-	}
-	return true
 }
 
 func (a *App) UpdateAndRestart() {

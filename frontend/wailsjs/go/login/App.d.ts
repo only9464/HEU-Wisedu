@@ -3,12 +3,12 @@
 import {http} from '../models';
 import {context} from '../models';
 
-export function GetCaptcha():Promise<{[key: string]: string}>;
+export function GetCaptcha():Promise<Record<string, string>>;
 
-export function LoginToJwgl(arg1:string,arg2:string,arg3:string,arg4:string,arg5:string,arg6:string):Promise<{[key: string]: http.Cookie}>;
+export function LoginToJwgl(arg1:string,arg2:string,arg3:string,arg4:string,arg5:string,arg6:string):Promise<Record<string, http.Cookie>>;
 
-export function QueryAllGrade(arg1:{[key: string]: http.Cookie}):Promise<{[key: string]: any}>;
+export function QueryAllGrade(arg1:Record<string, http.Cookie>):Promise<Record<string, any>>;
 
-export function SaveGradeToFile(arg1:{[key: string]: any}):Promise<void>;
+export function SaveGradeToFile(arg1:Record<string, any>):Promise<void>;
 
 export function Startup(arg1:context.Context):Promise<void>;

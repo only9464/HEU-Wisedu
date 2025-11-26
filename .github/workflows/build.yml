@@ -1,0 +1,28 @@
+name: HEU-Wisedu
+
+on:
+  # push:
+  # pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        build: [
+          {name: HEU-Wisedu, platform: linux/amd64, os: ubuntu-latest},
+          {name: HEU-Wisedu, platform: windows/amd64, os: windows-latest},
+          {name: HEU-Wisedu, platform: darwin/universal, os: macos-latest},
+        ]
+    runs-on: ${{ matrix.build.os }}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - uses: dAppServer/wails-build-action@main
+        with:
+          build: true
+          build-name: ${{ matrix.build.name }}
+          build-platform: ${{ matrix.build.platform }}
+          # build-obfuscate: true
