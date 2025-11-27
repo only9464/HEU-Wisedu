@@ -25,4 +25,5 @@ jobs:
           build: true
           build-name: ${{ matrix.build.name }}
           build-platform: ${{ matrix.build.platform }}
-          # build-obfuscate: true
+          build-obfuscate: true
+          go-version: 1.25
