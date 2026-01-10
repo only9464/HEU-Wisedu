@@ -49,20 +49,19 @@ Gitee地址：[https://gitee.com/only9464/HEU-Wisedu](https://gitee.com/only9464
 
 # 三、下载
 
-强烈建议各位学会自己下载源码编译成可执行程序，当然，如果你想偷懒：
+~~强烈建议各位学会自己下载源码编译成可执行程序，当然，如果你想偷懒：~~
+【2026年1月10日22:00】从此以后**不再**提供**完整的源代码**，仅提供**部分源代码**和**windows可执行程序**
 
 - [X] Windows[下载](https://gh-proxy.com/https://github.com/only9464/HEU-Wisedu/releases/latest/download/HEU-Wisedu.exe)
 - [ ] MacOS  [下载](https://gh-proxy.com/https://github.com/only9464/HEU-Wisedu/releases/latest/download/HEU-Wisedu.exe)
 - [ ] Linux  [下载](https://gh-proxy.com/https://github.com/only9464/HEU-Wisedu/releases/latest/download/HEU-Wisedu.exe)
 
-如果想自己下载源码编译，可以参考下面的**二次开发[打包](#3打包)** 部分
+~~如果想自己下载源码编译，可以参考下面的**二次开发[打包](#3打包)** 部分~~
 
 
 # 四、支持作者
 
-`赛博乞讨(bushi)：`
-
-路过的各位同志们，大家好！我是共产主义接班人(从小,老师就这么告诉我的)，Vivo ￥0.01，助力我完成共产主义事业！
+更新不易，还请多多支持！！！Ciallo～(∠・ω< )⌒★
 
 ![sponsor](image/README/image.png)
 
