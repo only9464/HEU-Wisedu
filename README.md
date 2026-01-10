@@ -11,6 +11,7 @@ HEU-Wisedu是一款基于[哈尔滨工程大学教务选课系统](https://jwxk.
 [![Forks](https://img.shields.io/github/forks/only9464/HEU-Wisedu?label=Forks数量&color=blue)](https://github.com/only9464/HEU-Wisedu/network/members)
 > [!WARNING]
 > 本软件完全免费且开源，可二次开发。仅供学习交流使用，请勿用于商业用途，一经发现，将拉黑、并依规向校方举报！！！
+> 
 > 【2026年1月10日】发现有司马玩意使用该免费开源软件牟取利润，这违背了我造福大家的初衷，所以从此只开放核心源代码
 > 
 > **以后一机一号，严防倒卖，如有发现还存在任何使用我的免费软件倒卖的行为，欢迎各位向我举报，在向校方举报的同时，根据本项目开源协议依法起诉**
@@ -23,12 +24,12 @@ Gitee地址：[https://gitee.com/only9464/HEU-Wisedu](https://gitee.com/only9464
 
 # 一、优势
 
-- [X] **开源免费**，无需付款，更适合HEU宝宝体质。(担心信息泄露的自己下载源代码编译程序,参考下文[**二次开发**](#五二次开发)部分)
+- [X] **免费**(希望各位尊重别人的劳动成果，共同打击倒卖行为)
 - [X] **直接**调用[选课系统](https://jwxk.hrbeu.edu.cn/)API进行课程相关操作，省去繁杂加载，**高峰期选(qiang)课快人一步**（
-- [X] 支持跨平台，支持Windows、MacOS、Linux
+- [X] ~~支持跨平台，支持Windows、MacOS、Linux~~（现在只提供windows可执行程序）
 - [X] 根据已修学分(查成绩)，选课更方便、快捷、具有目的性
 - [X] 采用Golang的通道技术多个课程依次选(qiang)课、多线程多个课程同时选(qiang)课，自己设置间隔时间（操作简单，一看就会）
-- [X] 界面简约美观(乐)，支持明暗双主题（暗色太拉胯了）
+- [X] 界面简约美观(乐)，支持明暗双主题（暗色太拉胯了）（没调好，艹）
 
 [更新日志](#八更新日志)
 
@@ -51,8 +52,8 @@ Gitee地址：[https://gitee.com/only9464/HEU-Wisedu](https://gitee.com/only9464
 强烈建议各位学会自己下载源码编译成可执行程序，当然，如果你想偷懒：
 
 - [X] Windows[下载](https://gh-proxy.com/https://github.com/only9464/HEU-Wisedu/releases/latest/download/HEU-Wisedu.exe)
-- [X] MacOS  [下载](https://gh-proxy.com/https://github.com/only9464/HEU-Wisedu/releases/latest/download/HEU-Wisedu-MacOS.zip)
-- [X] Linux  [下载](https://gh-proxy.com/https://github.com/only9464/HEU-Wisedu/releases/latest/download/HEU-Wisedu-Linux-amd64)
+- [ ] MacOS  [下载](https://gh-proxy.com/https://github.com/only9464/HEU-Wisedu/releases/latest/download/HEU-Wisedu.exe)
+- [ ] Linux  [下载](https://gh-proxy.com/https://github.com/only9464/HEU-Wisedu/releases/latest/download/HEU-Wisedu.exe)
 
 如果想自己下载源码编译，可以参考下面的**二次开发[打包](#3打包)** 部分
 
@@ -136,7 +137,13 @@ wails build
 
 # 八、更新日志
 
-- V0.0.3 【2025年1月14日15:16】`<br>`
+- VersionCode：0【2026年1月10日21:56:19】`<br>`
+  - 更改选课系统登录方式，适配学校选课系统，改为统一身份认证`<br>`
+  - 删除选(qiang)课模式：狂暴模式`<br>`
+  - 增加一号一码绑定，采取手段打击代抢课牟利行为`<br>`
+
+
+- 【2025年1月14日15:16】`<br>`
   - 修复系统默认暗色导致表格字体显示不清楚的Bug`<br>`
   - 新增选(qiang)课模式：老实人模式、狂暴模式`<br>`
   - 更改默认选(qiang)课间隔时间：0.1s --> 0.275s`<br>`
